@@ -56,3 +56,5 @@ Demo scenario
 The demo data covers one simulated shift with 14 patients.
 Things to look for:
 
+Data and privacy
+All patient data in the repository
