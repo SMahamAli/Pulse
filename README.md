@@ -21,6 +21,14 @@ Each patient is given a wristband when they're triaged. The band continuously re
 - Skin temperature
 - Falls
 
+Tech stack 
+| Part | Technology |
+|---|---|
+Wristband |ESP32-WROOM-32, Accelerometer MPU-6050, Oximeter & heart rate sensor, Fever Click Board MIKROE-2554, Wristband, LCD Display, Small 3.7V LiPo-300
+| Database | Oracle (built in Oracle APEX) | 
+| Website | 
+Dashboard
+
 The readings go to a live dashboard that staff can watch. The system:
 - Combines wristband data with staff observations to calculate an early warning score.
 - Raises an alert when a patient crosses a threshold.
@@ -33,3 +41,4 @@ Features
 - Trend charts so staff can see whether a patient is getting worse.
 - Alerts sorted by severity.
 - Logins with different roles (Doctor, nurse, patient, admin, receptionist)
+
