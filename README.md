@@ -27,7 +27,7 @@ Tech stack
 Wristband |ESP32-WROOM-32, Accelerometer MPU-6050, Oximeter & heart rate sensor, Fever Click Board MIKROE-2554, Wristband, LCD Display, Small 3.7V LiPo-300
 | Database | Oracle (built in Oracle APEX) | 
 | Website | 
-Dashboard
+| AI Training |
 
 The readings go to a live dashboard that staff can watch. The system:
 - Combines wristband data with staff observations to calculate an early warning score.
