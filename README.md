@@ -1,2 +1,2 @@
-# Dr.GPT
+# Pulse
 Hackathon for AI in healthcare
