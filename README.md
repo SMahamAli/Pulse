@@ -1,6 +1,35 @@
 # Pulse - Wearable Patient Monitoring for A&E
 
-Built at 
+Built at AI IN HEALTHCARE HACKATHON 
 
-#The problem
-Hackathon for AI in healthcare
+Collaborators:
+- Elysha Ruddock
+- Mohammed Sherif
+- Mostafa Issa
+- Maham Ali
+
+The problem
+
+Patients can wait in NHS A&E waiting rooms for hours after triage. Their condition can get worse during that time without any one noticing, due to staff not been able to watch everyone in a busy waiting room. 
+
+Our solution
+
+Each patient is given a wristband when they're triaged. The band continuously records:
+- Heart rate
+- Blood oxygen(spO2)
+- Respiratory rate
+- Skin temperature
+- Falls
+
+The readings go to a live dashboard that staff can watch. The system:
+- Combines wristband data with staff observations to calculate an early warning score.
+- Raises an alert when a patient crosses a threshold.
+- allows staff to acknowledge and resolve alerts while keeping a record of who responded and when.
+
+Features
+
+- Live overview of every patient in the department, colour coded by triage category.
+- Latest vitals for each patient.
+- Trend charts so staff can see whether a patient is getting worse.
+- Alerts sorted by severity.
+- Logins with different roles (Doctor, nurse, patient, admin, receptionist)
