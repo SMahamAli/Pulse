@@ -42,3 +42,17 @@ Features
 - Alerts sorted by severity.
 - Logins with different roles (Doctor, nurse, patient, admin, receptionist)
 
+Demo Logins
+
+| Role | Email | Password |
+|---|---|---|
+| Nurse | priya.patel@demo-nhs.test | priya1 |
+| Doctor | sarah.whitfield@demo-nhs.test | sarah1 |
+| Nurse in Charge | michael.grant@demo-nhs.test | michael1 |
+| Admin | rachel.adams@demo-nhs.test | rachel1 |
+
+Demo scenario
+
+The demo data covers one simulated shift with 14 patients.
+Things to look for:
+
