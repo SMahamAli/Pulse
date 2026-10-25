@@ -51,7 +51,7 @@ Python tests preserve arrival versus registration, elapsed waiting, exclusive as
 
 The basic CSS-token contrast test computes ratios instead of merely checking strings; it does not replace screen-reader, gradient/inheritance, physical-device or full WCAG testing. Python syntax compilation replaces the former frontend build check; there is no npm build now.
 
-See migration.md for preservation/behaviour changes, manual-testing.md for actual results and pending cases, and INTEGRATION.md for teammate work still needed.
+See development-guide.md for setup, manual-testing.md for recorded checks and pending cases, and INTEGRATION.md for teammate work still needed.
 
 The sharing review adds `tests/test_readiness.py`: assignment-to-first-reading behaviour, expired freshness, frozen waiting on closure, separate symptom/general review, invalid optional readings, closed/overlong symptom rejection, reachable links/form targets and staff filters. Two additional Python browser flows exercise assisted registration and staff/admin controls. Form-target OPTIONS tests check routing only; browser/service tests check actions. No new test framework was added.
 
