@@ -1,4 +1,4 @@
-"""Proposed JSON boundary for Elysha's notebook review table, not a model implementation.
+"""Historical notebook review-table boundary, separate from the new classifier preview.
 
 Dataset stay IDs are deliberately not treated as live Pulse patient/visit IDs.
 No duration experiment is converted into an A&E remaining-wait prediction.
@@ -18,5 +18,5 @@ def map_notebook_review(row):
         "demoFlag": row.get("demo_flag") if isinstance(row.get("demo_flag"), bool) else None,
         "missingSensorData": bool(row.get("missing_sensor_data")) or heart_rate is None,
         "dashboardMessage": row.get("dashboard_message"),
-        "source": "AI_Training.ipynb review-table proposal; not a live assessment",
+        "source": "model/AI_Training_backup.ipynb review-table proposal; not a live assessment",
     }

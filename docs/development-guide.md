@@ -1,5 +1,20 @@
 # Running and checking Pulse (Python)
 
+## Elysha's AI research preview
+
+Install `requirements-ai.txt`, start Flask, enter **Demo staff > AI research**, and choose **Prepare research model**. Select a listed synthetic example and choose **Run research prediction**. The first preparation trains Elysha's unchanged `model/02_reassessment_model.py` once in server memory. Refreshing does not retrain it. Restarting Flask clears it. Missing libraries and failed model execution show errors with retry/setup instructions.
+
+The preview uses held-out synthetic dataset records, not Oracle/demo patient IDs. It does not change categories or staff decisions. Live patient mapping remains pending because several required clinical inputs are unavailable. See `INTEGRATION.md` for that boundary. `requirements-dev.txt` includes AI dependencies for CI and actual model tests.
+
+## Oracle automatic refresh
+
+Staff > Patients > Oracle records reloads every 10 seconds after a successful read.
+Use **Pause automatic refresh** to read without interruption, or **Resume automatic refresh** to restart it.
+Manual refresh also works while paused. A failed read stops automatic refresh; use **Refresh Oracle data** to retry.
+This uses HTML page refresh without JavaScript. It fetches stored Oracle records, not a direct sensor stream.
+Check the measurement timestamp separately: fetching again does not make an old reading new or prove a band is connected.
+The demo patient dashboard still uses synthetic readings.
+
 Install Python 3.12+ and open a terminal in this project folder. Node/npm are not needed for the active Flask app.
 
 ```powershell
@@ -71,6 +86,6 @@ Garmin is optional: the synthetic core works without a key. Follow garmin-setup.
 
 ## Garmin readings update (supersedes access-check-only notes above)
 
-The local owner preview now requests documented daily heart-rate and SpO2 data, maps timestamped samples/daily HR statistics, and polls every 30 seconds through a native HTML refresh. Temperature remains unavailable; no direct live-watch connection is claimed. Values remain separate from synthetic visits and Oracle/model data. The readings client caches bearer tokens only in server memory; Stop/Clear removes them. Local loopback and patient/staff demo role checks apply, but real authenticated ownership/consent is still required before any public/multi-user use. Real owner HR/statistics and the website preview have now been verified after exact-text key configuration; token/HR/SpO2 endpoints returned HTTP 200, but no timestamped SpO2 sample was supplied. Automated tests continue to use synthetic HTTP responses. See garmin-setup.md for current instructions, schemas, mapping and limitations.
+The local owner preview now requests documented daily heart-rate and SpO2 data, maps timestamped samples/daily HR statistics, and polls every 10 seconds through a native HTML refresh. Temperature remains unavailable; no direct live-watch connection is claimed. Values remain separate from synthetic visits and Oracle/model data. The readings client caches bearer tokens only in server memory; Stop/Clear removes them. Local loopback and patient/staff demo role checks apply, but real authenticated ownership/consent is still required before any public/multi-user use. Real owner HR/statistics and the website preview have now been verified after exact-text key configuration; token/HR/SpO2 endpoints returned HTTP 200, but no timestamped SpO2 sample was supplied. Automated tests continue to use synthetic HTTP responses. See garmin-setup.md for current instructions, schemas, mapping and limitations.
 
 Latest Garmin access result: exact-text credential corrected the screenshot transcription. Authentication and both measurement endpoints returned HTTP 200; owner HR/statistics rendered on the running site. The credential remains in the ignored local secret file only; no secret, raw measurement values or personal-data screenshots were added to source. No push/merge.

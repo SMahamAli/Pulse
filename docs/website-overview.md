@@ -1,5 +1,7 @@
 # Pulse website overview
 
+Latest AI addition: **Staff > AI research** prepares Elysha's newly added Random Forest script and runs actual inference on its held-out synthetic test rows. `pulse/assessment.py` is the website adapter, not a second model. Install `requirements-ai.txt` for this preview. Preparation is cached until restart. Patient/Oracle records are not model inputs yet because required clinical fields and identity mapping still need team agreement. The earlier notebook now lives at `model/AI_Training_backup.ipynb`.
+
 Pulse helps A&E patients share information while waiting and gives staff a place to review visits, readings and requests. Mohammed owns the website, Mostafa the hardware, Maham the Oracle database and Elysha the AI research.
 
 ## Screens

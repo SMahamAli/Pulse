@@ -1,6 +1,12 @@
 # Garmin: local account-owner readings
 
-Devices now has **Show Garmin readings** as well as a separate API-access check. The readings page requests the owner's daily heart-rate and SpO2 data from Garmin Connect, maps documented fields, shows measurement time/age, daily minimum/maximum/resting heart rate and a history graph. It refreshes every 30 seconds while open. This is latest synced cloud data, not a direct/live sensor stream. The watch must sync to Garmin Connect; old samples remain old even after a new fetch. Temperature is unavailable because no temperature endpoint has been configured.
+## Current preview: heart rate and daily stress
+
+Temperature was removed from this preview only. The second card is **Daily stress score**, using Garmin's documented `/usersummary-service/stats/stress/daily/{startDate}/{endDate}` endpoint and `values.overallStressLevel` for the selected `calendarDate`. It is a 0–100 daily summary, not a live stress sample or a clinical assessment. Zero is a valid supplied score. Negative, missing, invalid or wrong-date values show Unavailable. No stress is inferred from heart rate.
+
+The page checks every 10 seconds while open, subject to Garmin's rate-limit cooldown. Daily stress shows its summary date and retrieval time because this endpoint supplies no individual measurement timestamp. Failed refreshes retain earlier values with their original dates/retrieval times and show an error. Oracle and other patient/staff temperature cards are unchanged. The historical notes below describe earlier preview versions.
+
+Devices now has **Show Garmin readings** as well as a separate API-access check. The readings page requests the owner's daily heart-rate and SpO2 data from Garmin Connect, maps documented fields, shows measurement time/age, daily minimum/maximum/resting heart rate and a history graph. It refreshes every 10 seconds while open. This is latest synced cloud data, not a direct/live sensor stream. The watch must sync to Garmin Connect; old samples remain old even after a new fetch. Temperature is unavailable because no temperature endpoint has been configured.
 
 ## One-time private setup
 

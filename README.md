@@ -26,17 +26,28 @@ Pulse helps patients and staff stay connected while patients wait in A&E. Patien
 ## How to run the website
 
 1. Install **Python 3.12 or newer** from [python.org](https://www.python.org/downloads/). On Windows, tick **Add Python to PATH**.
-2. Download this project and open its folder in VS Code. Choose **Terminal > New Terminal**. VS Code is optional.
-3. Install the requirements:
+2. On GitHub, choose **Code > Download ZIP**. Right-click the downloaded ZIP and choose **Extract All**. Do not run it inside the ZIP.
+3. In VS Code, choose **File > Open Folder**. Open the extracted folder that contains **app.py** and **requirements.txt**, usually **Pulse-main**. If you only see another Pulse-main folder inside, open that inner folder. Choose **Terminal > New Terminal**.
+4. Check that your terminal is in the correct folder:
+
+```powershell
+dir app.py, requirements.txt
+```
+
+Both files must appear. If you see **No such file** or **Cannot find path**, reopen the correct folder using step 3 and open a new terminal. On Mac/Linux, use `ls app.py requirements.txt`.
+
+5. Install the requirements:
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-4. Start the website:
+6. Start the website:
 
 ```powershell
 python app.py
 ```
 
-5. Open **http://127.0.0.1:5000/** and choose **Demo patient**, **Demo staff** or **Demo admin**. Keep the terminal open. Press **Ctrl + C** to stop it. The same commands work on Mac/Linux.
+7. Open **http://127.0.0.1:5000/** and choose **Demo patient**, **Demo staff** or **Demo admin**. Keep the terminal open. Press **Ctrl + C** to stop it. Each laptop must run its own copy; GitHub does not host the running website. On Mac/Linux, use `python3` if `python` is unavailable.
+
+For **Demo staff > AI research**, first run `python -m pip install -r requirements-ai.txt`. Then choose **Prepare research model**, select a synthetic example and run its prediction. This uses Elysha's model and synthetic dataset, separately from live patients.

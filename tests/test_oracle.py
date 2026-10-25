@@ -35,6 +35,60 @@ TOKEN = {"access_token": "test-token", "expires_in": 3600}
 EMPTY = {"items": [], "hasMore": False}
 
 
+@pytest.mark.parametrize("paused", [False, True])
+def test_oracle_refresh_fetches_new_measurements_and_can_be_paused(app, client, tmp_path, paused):
+    patient = {"items": [{"patient_id": 1000, "assignment_id": 7001, "forename": "Test"}]}
+
+    def reading(value, timestamp):
+        return {
+            "items": [
+                {
+                    "patient_id": 1000,
+                    "assignment_id": 7001,
+                    "heart_rate": value,
+                    "recorded_at": timestamp,
+                }
+            ]
+        }
+
+    reader, transport = oracle(
+        tmp_path,
+        TOKEN,
+        patient,
+        reading(73, "2026-10-25T10:00:00"),
+        EMPTY,
+        patient,
+        reading(79, "2026-10-25T10:01:00"),
+        EMPTY,
+    )
+    app.extensions["oracle_service"] = reader
+    post(client, "/demo/staff")
+    path = "/staff/database?refresh=off" if paused else "/staff/database"
+    first = client.get(path)
+    second = client.get(path)
+    assert b"73.0 bpm" in first.data
+    assert b"79.0 bpm" in second.data and b"73.0 bpm" not in second.data
+    assert b"2026-10-25T10:01:00" in second.data
+    assert (b'http-equiv="refresh"' in second.data) is not paused
+    if not paused:
+        assert b'content="10;url=/staff/database"' in second.data
+        assert b"every 10 seconds" in second.data
+    assert (b"Resume automatic refresh" if paused else b"Pause automatic refresh") in second.data
+    assert b"Local Garmin owner preview" not in second.data
+    assert len(transport.requests) == 7
+
+
+def test_oracle_refresh_stops_on_failure_without_substituting_demo_rows(app, client, tmp_path):
+    reader, _ = oracle(tmp_path, TOKEN, HTTPError(BASE, 503, "Unavailable", {}, None))
+    app.extensions["oracle_service"] = reader
+    post(client, "/demo/staff")
+    response = client.get("/staff/database")
+    assert b'http-equiv="refresh"' not in response.data
+    assert b"Automatic refresh stopped" in response.data
+    assert b"Refresh Oracle data" in response.data
+    assert b"Alex Morgan" not in response.data
+
+
 def test_reads_actual_fields_and_preserves_missing_measurements(tmp_path):
     service, transport = oracle(
         tmp_path,

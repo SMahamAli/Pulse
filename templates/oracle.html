@@ -1,8 +1,12 @@
 {% extends 'base.html' %}{% from 'macros.html' import badge,icon with context %}
+{% block page_refresh %}{% if oracle_refresh %}<meta http-equiv="refresh" content="10;url={{url_for('oracle_patients')}}">{% endif %}{% endblock %}
 {% block content %}{% include 'patient_sources.html' %}
 <section class="visit-banner"><div><div class="eyebrow">ORACLE · READ ONLY</div><h2>Database patient records</h2><p>Patient names, readings and alerts from Maham's stored demonstration data.</p></div>{{icon('users',40)}}</section>
 <div class="notice">Recorded triage comes from the database, not an AI assessment. Measurement timezone and device connectivity are unconfirmed, so this view does not calculate waiting duration or claim a live device connection.</div>
-<p><a class="secondary" href="{{url_for('oracle_patients')}}">Refresh Oracle data</a> {{badge('Connected · read only' if oracle_data else oracle_configuration)}}</p>
+<div class="button-row"><a class="secondary" href="{{url_for('oracle_patients',refresh='off') if oracle_paused else url_for('oracle_patients')}}">Refresh Oracle data</a>
+{% if oracle_paused %}<a class="secondary" href="{{url_for('oracle_patients')}}">Resume automatic refresh</a>{% elif oracle_refresh %}<a class="secondary" href="{{url_for('oracle_patients',refresh='off')}}">Pause automatic refresh</a>{% endif %}
+{{badge('Connected · read only' if oracle_data else oracle_configuration)}}</div>
+<p>{% if oracle_paused %}Automatic refresh paused.{% elif oracle_refresh %}This page reloads every 10 seconds to fetch the latest stored records. Pause it to read without interruption.{% else %}Automatic refresh stopped because Oracle could not be read. Use Refresh Oracle data to retry.{% endif %} A page refresh does not mean a new sensor reading arrived; check the measurement timestamp. This does not verify that a band is connected.</p>
 {% if oracle_error %}<div class="notice error" role="alert">{{oracle_error}} No mock rows are substituted for failed Oracle requests.</div>{% endif %}
 {% if oracle_data %}
 <div class="stats-admin"><section class="stat"><div>Current patients</div><strong>{{oracle_data.patients|length}}</strong><small>Stored database records</small></section><section class="stat"><div>Latest readings</div><strong>{{oracle_data.readings|length}}</strong><small>Matched to active band assignments</small></section><section class="stat"><div>Open/acknowledged alerts</div><strong>{{oracle_data.alerts|length}}</strong><small>Recorded database events</small></section><section class="stat"><div>Last refreshed</div><strong style="font-size:18px">{{time(oracle_data.fetchedAt)}}</strong><small>Refresh time, not measurement time</small></section></div>

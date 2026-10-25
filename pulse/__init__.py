@@ -19,6 +19,7 @@ from flask import (
 )
 
 from . import display
+from .assessment import ResearchAssessment
 from .garmin import GarminAccess
 from .oracle import OracleService
 from .services import DemoService, INTAKE_FIELDS, METRICS, validate_profile
@@ -36,6 +37,7 @@ def create_app(config=None):
     app.extensions["demo_services"] = {}
     app.extensions["garmin_access"] = GarminAccess()
     app.extensions["oracle_service"] = OracleService()
+    app.extensions["research_assessment"] = ResearchAssessment()
 
     @app.before_request
     def prepare_demo():
@@ -100,6 +102,7 @@ def create_app(config=None):
                 ("Chat", "chat", "message"),
                 ("Devices", "devices", "watch"),
                 ("Alerts", "alerts", "bell"),
+                ("AI research", "ai_research", "activity"),
             ]
         )
         if role == "admin":
@@ -149,6 +152,7 @@ def create_app(config=None):
             "details": ("patients", "Patients"),
             "oracle_patients": ("patients", "Demo workflow"),
             "garmin_readings": ("devices", "Devices"),
+            "ai_research": ("staff", "Home"),
             "admin_access": ("admin", "Home"),
             "admin_activity": ("admin", "Home"),
         }
@@ -457,6 +461,32 @@ def create_app(config=None):
         require_role("patient", "staff", "admin")
         return render("chat.html", title="Chat", page="chat")
 
+    @app.route("/staff/ai", methods=["GET", "POST"])
+    def ai_research():
+        require_role("staff")
+        model = app.extensions["research_assessment"]
+        result, error = None, None
+        if request.method == "POST":
+            action = request.form.get("action")
+            if action == "prepare":
+                model.prepare()
+            elif action == "predict":
+                try:
+                    result = model.predict(request.form.get("example", ""))
+                except ValueError as problem:
+                    error = str(problem)
+            else:
+                error = "Choose a supported research action."
+        return render(
+            "ai_research.html",
+            title="AI research",
+            page="ai_research",
+            model_status=model.status(),
+            examples=model.examples(),
+            research_result=result,
+            research_error=error,
+        )
+
     @app.get("/staff/database")
     def oracle_patients():
         require_role("staff")
@@ -478,6 +508,8 @@ def create_app(config=None):
             oracle_data=result,
             oracle_error=error,
             oracle_configuration=service.configuration(),
+            oracle_refresh=request.args.get("refresh") != "off" and result is not None,
+            oracle_paused=request.args.get("refresh") == "off",
         )
 
     @app.route("/messages", defaults={"reference": None}, methods=["GET", "POST"])
@@ -587,7 +619,7 @@ def create_app(config=None):
             return redirect(url_for("devices"))
         now = datetime.now(timezone.utc)
         attempted = display.parse_time(service.garmin_attempted)
-        if not attempted or (now - attempted).total_seconds() >= 30:
+        if not attempted or (now - attempted).total_seconds() >= 10:
             service.garmin_attempted = now.isoformat()
             try:
                 result = app.extensions["garmin_access"].readings(service.garmin_day)
@@ -595,6 +627,9 @@ def create_app(config=None):
                     previous = service.garmin_readings
                     if result["heartRate"] is None and previous["heartRate"] is not None:
                         for key in ("heartRate", "heartTime", "history", "stats"):
+                            result[key] = previous[key]
+                    if result.get("stress") is None and previous.get("stress") is not None:
+                        for key in ("stress", "stressDate", "stressFetchedAt"):
                             result[key] = previous[key]
                 service.garmin_readings, service.garmin_error = result, None
             except ValueError as error:
@@ -607,7 +642,7 @@ def create_app(config=None):
             garmin_error=service.garmin_error,
             garmin_day=service.garmin_day,
             garmin_attempted=service.garmin_attempted,
-            auto_refresh=30,
+            auto_refresh=10,
         )
 
     @app.post("/devices/garmin/stop")

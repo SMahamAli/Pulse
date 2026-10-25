@@ -29,7 +29,7 @@
 </section>
 <div class="two-grid">
 <section class="panel">
-<h2>Experimental assessment</h2>{{badge(v.assessment.state ~ (' · synthetic output' if v.assessment.state=='completed' else ' · not completed'))}}<h3>{{v.assessment.get('category','No recommendation supplied')}}</h3>
+<h2>Experimental assessment</h2><p><a href="{{url_for('ai_research')}}">Open Elysha's AI research preview</a>. It uses separate synthetic dataset examples; this visit is not connected to model inference.</p>{{badge(v.assessment.state ~ (' · synthetic output' if v.assessment.state=='completed' else ' · not completed'))}}<h3>{{v.assessment.get('category','No recommendation supplied')}}</h3>
 <p>{{v.assessment.get('explanation','Awaiting an agreed assessment service. No completed result is fabricated.')}}</p>{% if v.assessment.get('version') %}<small>Model version: {{v.assessment.version}}</small>{% endif %}{% call command('decision','Record staff decision',v.id,'details',primary=true) %}<label class="field">Staff-confirmed category<input name="category" required value="Staff review complete">
 </label>
 <label class="field">Review / override reason<textarea name="reason" required>

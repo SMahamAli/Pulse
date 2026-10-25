@@ -5,6 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 {% if auto_refresh %}<meta http-equiv="refresh" content="{{auto_refresh}};url={{url_for('garmin_readings')}}">{% endif %}
+{% block page_refresh %}{% endblock %}
 <meta name="theme-color" content="#101416">
 <meta name="description" content="Pulse healthcare hackathon prototype — synthetic patient and staff journeys.">
 <title>{{title}} · Pulse</title>

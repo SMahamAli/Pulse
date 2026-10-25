@@ -29,7 +29,7 @@ class Navigation(HTMLParser):
     "role,expected",
     [
         ("patient", ["Home", "My visits", "Hospitals", "Chat", "Devices"]),
-        ("staff", ["Home", "Patients", "Chat", "Devices", "Alerts"]),
+        ("staff", ["Home", "Patients", "Chat", "Devices", "Alerts", "AI research"]),
         ("admin", ["Home", "Staff & admin access", "Login activity", "Chat"]),
     ],
 )

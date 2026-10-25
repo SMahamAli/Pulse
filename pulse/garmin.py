@@ -181,6 +181,10 @@ class GarminAccess:
                     "Heart rate",
                     f"/wellness-service/wellness/dailyHeartRate?date={selected.isoformat()}",
                 ),
+                (
+                    "Stress",
+                    f"/usersummary-service/stats/stress/daily/{selected.isoformat()}/{selected.isoformat()}",
+                ),
             ):
                 request = Request(
                     "https://personal.connectapi.garmin.com" + path,
@@ -195,7 +199,7 @@ class GarminAccess:
                     if len(raw) > 2_000_000:
                         raise ValueError("Response too large")
                     payload = json.loads(raw)
-                    if not isinstance(payload, dict):
+                    if not isinstance(payload, dict if name == "Heart rate" else list):
                         raise ValueError("Unexpected schema")
                     payloads.append(payload)
                 except HTTPError as error:
@@ -224,6 +228,6 @@ class GarminAccess:
                         f"{name}: data could not be retrieved. Retry after checking Garmin sync and internet access."
                     )
                     payloads.append(None)
-            result = map_readings(payloads[0], day=selected.isoformat())
+            result = map_readings(payloads[0], day=selected.isoformat(), stress=payloads[1])
             result["errors"] = errors
             return result

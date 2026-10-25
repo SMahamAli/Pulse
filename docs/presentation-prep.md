@@ -1,5 +1,9 @@
 # Pulse presentation preparation — Flask version
 
+## New AI demonstration
+
+The pulled team code now includes `model/02_reassessment_model.py` and a synthetic CSV. Staff can open **AI research**, prepare the model and run a held-out synthetic example through the actual fitted pipeline. Say: "We can now run Elysha's research model from the website on its synthetic test examples. Connecting it to live patient inputs is the next integration step." Several model inputs are absent from the current forms/sensor feed, so do not describe this preview as live patient triage. Earlier statements below about no executable model in the repository are superseded. The earlier notebook moved to `model/AI_Training_backup.ipynb`.
+
 ## Current demo wording
 
 Say: "I worked on the Python Flask website with HTML templates and CSS. Patients have Home, visit history, postcode search and Chat. Staff Home is a summary; the Patients workspace clearly separates the demo workflow from Oracle records. The Oracle tab reads the same names and IDs stored in Maham's database. Our web forms and conversations still use a separate demo service, so I do not claim those writes are integrated. We now display heart rate and skin temperature only. The Pulse animation is decorative. Codex helped implement and test the interface; I reviewed the workflows and integration boundaries."

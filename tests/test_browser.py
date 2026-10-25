@@ -385,9 +385,10 @@ def test_garmin_synced_preview_with_http_double(page, live_app, monkeypatch):
         page.get_by_role("heading", name="Latest synced Garmin readings", exact=True)
     ).to_be_visible()
     expect(page.get_by_role("article", name="Garmin Heart rate", exact=True)).to_contain_text("73")
-    expect(page.get_by_role("article", name="Garmin Temperature", exact=True)).to_contain_text(
-        "Unavailable"
-    )
+    expect(
+        page.get_by_role("article", name="Garmin daily stress score", exact=True)
+    ).to_contain_text("28")
+    expect(page.get_by_role("article", name="Garmin Temperature", exact=True)).to_have_count(0)
     expect(
         page.get_by_role("heading", name="Daily heart-rate statistics", exact=True)
     ).to_be_visible()

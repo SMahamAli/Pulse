@@ -1,5 +1,23 @@
 # Pulse integration notes — Python Flask
 
+## Hardware credential before submission
+
+The hardware file `ESP-E12 code` now uses `YOUR_API_KEY` in its API-key assignment. Configure the real key privately in the hardware teammate's local firmware before uploading to the device. Do not commit it. The original file was preserved in an ignored local `.secrets` backup; it is not a distributable setup file. The previous key was already committed upstream, so replacing this copy does not remove its history: Mostafa/the key owner must revoke or rotate it. Sensor and transmission logic were preserved. The generated tracked `ai_api` bytecode was removed because it supplies no source API implementation.
+
+## AI update after the team pull
+
+The team added `model/02_reassessment_model.py`, its synthetic CSV and analysis scripts. The earlier notebook is now `model/AI_Training_backup.ipynb`. There is no source prediction API or exported fitted model in this update; the tracked `ai_api` bytecode is not an integration interface.
+
+`pulse/assessment.py` runs the unchanged training script only when staff choose **AI research > Prepare research model**. It reuses that script's fitted Random Forest pipeline and held-out `X_test` rows. Staff select a synthetic dataset reference and see the actual classifier output. Preparation is cached in server memory until restart. Model source hashes identify the code revision; no confidence score, clinical accuracy or model version is invented. Failed preparation/prediction shows an error without substituting a completed result. The core website still opens without these optional AI libraries.
+
+Install with `python -m pip install -r requirements-ai.txt`. Development/CI requirements include these packages so real model execution is tested. The preview never changes patient priority, staff decisions or Oracle records. Public demo staff entry remains a demonstration boundary, not production authentication.
+
+The model expects age, sex, chief complaint, arrival mode, triage category, heart rate, blood pressure, respiratory rate, SpO2, temperature, pain score and consciousness. Several are absent from current web forms and the supported sensor feed. Skin temperature cannot silently stand in for unspecified dataset temperature. **Team agreement is still needed** on feature names/units/sources, missing data, available clinical inputs and mapping Oracle patient/assignment IDs to an inference request. The training pipeline has an imputer, but its existence does not validate using severely incomplete live inputs. No removed clinical fields were added back to the website.
+
+The dataset explicitly describes labels from a fictional toy risk score with random noise. This implementation demonstrates software integration, not clinical validity. Patient assessment states remain separate from the research preview.
+
+Actual local run of source revision `d201a0b5cea5`: **0 of 22 positive-labelled examples flagged**, and 0 of 400 examples flagged overall in its held-out split. This is a material unresolved model-quality issue for Elysha, even though pipeline execution succeeds. The preview derives and displays these counts from the script's actual test outputs. No decision threshold, labels or training logic were changed to hide the result.
+
 ## Current navigation and metric scope
 
 The website now supports heart rate and skin temperature only. Oxygen saturation was removed at the team's request from web forms/cards, demo data, Python mapping, Garmin retrieval and our read-only API output. Earlier mentions below describe historical proposals. Maham's SQL and Elysha's notebook were not modified. The live source still loaded 11 patients, 11 reading records and 10 alerts; mapped names/IDs were checked against the raw API and matched.

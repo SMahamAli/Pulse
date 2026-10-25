@@ -1,5 +1,30 @@
 # Python migration checks and manual test record
 
+## Submission check — 25 October 2026
+
+`git pull --ff-only origin main` reported Already up to date at `85067b0`. Local `python -m pytest -q`: **204 passed in 73.87 seconds**, including browser tests. Ruff lint/format (28 files), compilation, dependency checks, model-script syntax parsing and Git whitespace checks passed. Latest remote-main GitHub CI run `40183491444` passed; it does **not** include the uncommitted website changes.
+
+Live metadata-only verification: protected Oracle read returned 11 patients, 11 latest readings and 10 alerts. Garmin returned heart-rate and daily-stress availability with zero request errors. No credentials, measurement values or patient details were printed. This does not prove a fresh physical-sensor reading reached the site.
+
+A hard-coded hardware API key was replaced with `YOUR_API_KEY`; the original hardware file is preserved only in an ignored local `.secrets` backup. The owner must rotate the previously committed key. The shareable text scan found no configured Oracle/Garmin/private-backup secret values. Generated `__pycache__/ai_api.cpython-312.pyc` was removed; no corresponding API source existed. Database/model source files are unchanged. AI model-quality concerns and live patient input mapping remain unresolved as documented below. Changes have not been pushed.
+
+## Latest AI integration checks
+
+Pulled team main through `85067b0` and restored local edits without conflicts. Teammate model, dataset, hardware source and `Pulse.sql` have no changes relative to that pull.
+
+Executed locally: `python -m pytest -q` **194 passed in 109.35 seconds**, including 14 browser tests. Ruff lint, formatting (28 files), syntax compilation, dependency check and Git whitespace checks passed. AI requirements installed successfully. These results are local; this new integration has not been pushed or checked by GitHub CI.
+
+Separate running-site Chromium check completed preparation and prediction on desktop and mobile with JavaScript disabled. An older Pulse process initially intercepted localhost requests; it was stopped and the updated server was verified. **Model quality remains unresolved:** source revision `d201a0b5cea5` flagged 0 of 22 positive-labelled held-out examples. Software-test passes do not mean the model meets its intended detection goal.
+
+| Test ID | Feature | Steps | Expected result | Actual result | Result |
+| --- | --- | --- | --- | --- | --- |
+| AI-01 | Actual teammate model | Prepare `ResearchAssessment`, predict a listed held-out example | Reuse original fitted pipeline, return its actual class | Prediction matched direct pipeline output; original script unchanged | Pass |
+| AI-02 | Source identity | Submit a demo/Oracle ID instead of a listed synthetic ID | Reject without patient inference | Rejected, no completed result rendered | Pass |
+| AI-03 | Setup/failure | Simulate missing dependencies and broken training | Helpful error and retry, no invented completion | Setup/failure paths passed | Pass |
+| AI-04 | Visit isolation | Run prediction from staff preview and compare visits | No category, clinical or workflow updates | Visit state unchanged | Pass |
+| AI-05 | Mobile browser | Open preview and run prediction with JavaScript disabled at 390px | Visible result and no horizontal page overflow | Chromium browser test passed | Pass |
+| AI-06 | Live patient inference | Agree fields, identity mapping and measurement sources with Elysha/Maham | Correct inputs without invented or substituted clinical values | Not connected; synthetic preview only | Awaiting team agreement |
+
 ## Current navigation and presentation review
 
 Final follow-up: **179 tests passed in 47.38 seconds**, including 13 browser flows, with lint/format/compile/whitespace checks passing. An additional regression verifies that a blank Oracle acknowledgement actor is shown as unavailable rather than a named reviewer. Internal database table names were removed from the product's summary cards; source provenance remains explicit. The scan of shareable files found no configured private key values, one README, and no diff to the team's SQL/notebook. This is the final count for this review, superseding 178 below.

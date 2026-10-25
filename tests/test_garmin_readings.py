@@ -33,7 +33,8 @@ def test_descriptor_mapping_latest_stats_timestamp_and_gaps():
     assert result["heartRate"] == 73
     assert result["stats"] == dict(minimum=52, maximum=115, resting=58)
     assert result["history"][1]["heartRate"] is None
-    assert result["temperature"] is None
+    assert result["stress"] is None
+    assert "temperature" not in result
     assert result["heartTime"] == (now - timedelta(minutes=2)).isoformat()
 
 
@@ -45,6 +46,54 @@ def test_missing_descriptors_future_and_invalid_values_are_not_invented():
     assert result["heartRate"] == 73
     heart["heartRateValueDescriptors"] = None
     assert map_readings(heart, "2026-10-24", now)["heartRate"] is None
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (0, 0),
+        (28, 28),
+        (100, 100),
+        (-1, None),
+        (101, None),
+        (None, None),
+        (True, None),
+        ("28", None),
+    ],
+)
+def test_daily_stress_maps_only_valid_vendor_scores(value, expected):
+    now = datetime.now(timezone.utc)
+    day = now.date().isoformat()
+    stress = [{"calendarDate": day, "values": {"overallStressLevel": value}}]
+    result = map_readings(payloads(now), day, now, stress=stress)
+    assert result["stress"] == expected
+    assert result["stressDate"] == (day if expected is not None else None)
+    assert result["stressFetchedAt"] == (now.isoformat() if expected is not None else None)
+    assert "stressTime" not in result  # No individual measurement timestamp in this endpoint.
+
+
+def test_stress_from_another_date_is_not_attached_to_selected_day():
+    result = map_readings(
+        {},
+        "2026-10-25",
+        stress=[{"calendarDate": "2026-10-24", "values": {"overallStressLevel": 30}}],
+    )
+    assert result["stress"] is None and result["stressDate"] is None
+
+
+def test_stress_failure_preserves_available_heart_rate_and_sanitizes_errors():
+    class MissingStress(DataServer):
+        def open(self, request, timeout):
+            if "/stats/stress/" in request.full_url:
+                self.calls.append(request.full_url)
+                raise HTTPError(request.full_url, 403, TEST_KEY, {}, None)
+            return super().open(request, timeout)
+
+    access = GarminAccess(environment={"GARMIN_PERSONAL_API_KEY": TEST_KEY}, opener=MissingStress())
+    result = access.readings(datetime.now(timezone.utc).date().isoformat())
+    assert result["heartRate"] == 73 and result["stress"] is None
+    assert result["errors"] == ["Stress: Garmin returned HTTP 403; no new measurement available."]
+    assert TEST_KEY not in str(result)
 
 
 class DataServer:
@@ -63,6 +112,13 @@ class DataServer:
         heart = payloads(datetime.now(timezone.utc))
         if self.reading_status:
             raise HTTPError(request.full_url, self.reading_status, TEST_KEY, {}, None)
+        if "/stats/stress/" in request.full_url:
+            heart = [
+                {
+                    "calendarDate": datetime.now(timezone.utc).date().isoformat(),
+                    "values": {"overallStressLevel": 28},
+                }
+            ]
         return BytesIO(json.dumps(heart).encode())
 
 
@@ -73,7 +129,7 @@ def test_read_transport_reuses_token_only_in_server_memory(tmp_path):
     assert access.readings(day)["heartRate"] == 73
     assert access.readings(day)["heartRate"] == 73
     assert server.calls.count(TOKEN_URL) == 1
-    assert len(server.calls) == 3
+    assert len(server.calls) == 5
     assert list(tmp_path.iterdir()) == []
     access.clear()
     assert access._bearer is None
@@ -113,7 +169,12 @@ class PreviewClient:
         if self.fail:
             raise ValueError("Garmin could not be reached.")
         now = datetime.now(timezone.utc)
-        result = map_readings(payloads(now), day, now)
+        result = map_readings(
+            payloads(now),
+            day,
+            now,
+            stress=[{"calendarDate": day, "values": {"overallStressLevel": 28}}],
+        )
         result["errors"] = []
         return result
 
@@ -135,9 +196,13 @@ def test_preview_polling_stop_and_no_fake_visit_or_cookie_writes(app, client):
         b"Synthetic reading" not in response.data
         and b"Latest synced Garmin readings" in response.data
     )
-    assert b'http-equiv="refresh"' in response.data
+    assert b'http-equiv="refresh" content="10;' in response.data
+    assert b"Daily stress score" in response.data and b"Temperature" not in response.data
     client.get("/devices/garmin/readings")
     assert provider.calls == 1
+    service.garmin_attempted = (datetime.now(timezone.utc) - timedelta(seconds=11)).isoformat()
+    client.get("/devices/garmin/readings")
+    assert provider.calls == 2
     assert service.snapshot() == before
     with client.session_transaction() as session:
         assert "heartRate" not in str(dict(session)) and "spo2" not in str(dict(session))

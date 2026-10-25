@@ -15,7 +15,7 @@ def measurement_time(value):
     return parsed.astimezone(timezone.utc) if parsed else None
 
 
-def map_readings(heart, day, now=None):
+def map_readings(heart, day, now=None, stress=None):
     now = now or datetime.now(timezone.utc)
     heart = heart if isinstance(heart, dict) else {}
     columns = {
@@ -47,12 +47,25 @@ def map_readings(heart, day, now=None):
         value = heart.get(name)
         return value if finite(value) and value > 0 else None
 
+    # The documented stress endpoint supplies daily summaries, not live samples.
+    stress_score = None
+    for summary in stress if isinstance(stress, list) else []:
+        if not isinstance(summary, dict) or summary.get("calendarDate") != day:
+            continue
+        values = summary.get("values")
+        value = values.get("overallStressLevel") if isinstance(values, dict) else None
+        if finite(value) and 0 <= value <= 100:
+            stress_score = value
+            break
+
     return dict(
         date=day,
         fetchedAt=now.isoformat(),
         heartRate=latest["heartRate"] if latest else None,
         heartTime=latest["time"] if latest else None,
-        temperature=None,
+        stress=stress_score,
+        stressDate=day if stress_score is not None else None,
+        stressFetchedAt=now.isoformat() if stress_score is not None else None,
         stats=dict(
             minimum=statistic("minHeartRate"),
             maximum=statistic("maxHeartRate"),
