@@ -27,7 +27,7 @@ Tech stack
 Wristband |ESP32-WROOM-32, Accelerometer MPU-6050, Oximeter & heart rate sensor, Fever Click Board MIKROE-2554, Wristband, LCD Display, Small 3.7V LiPo-300
 | Database | Oracle (built in Oracle APEX) | 
 | Website | 
-Dashboard
+| AI Training |
 
 The readings go to a live dashboard that staff can watch. The system:
 - Combines wristband data with staff observations to calculate an early warning score.
@@ -42,3 +42,19 @@ Features
 - Alerts sorted by severity.
 - Logins with different roles (Doctor, nurse, patient, admin, receptionist)
 
+Demo Logins
+
+| Role | Email | Password |
+|---|---|---|
+| Nurse | priya.patel@demo-nhs.test | priya1 |
+| Doctor | sarah.whitfield@demo-nhs.test | sarah1 |
+| Nurse in Charge | michael.grant@demo-nhs.test | michael1 |
+| Admin | rachel.adams@demo-nhs.test | rachel1 |
+
+Demo scenario
+
+The demo data covers one simulated shift with 14 patients.
+Things to look for:
+
+Data and privacy
+All patient data in the repository
