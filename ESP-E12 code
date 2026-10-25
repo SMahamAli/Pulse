@@ -1,0 +1,393 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <WiFiClientSecureBearSSL.h>
+#include <time.h>
+#include <math.h>
+
+// ================= YOUR SETTINGS =================
+
+const char* WIFI_SSID = "YOUR_SSID";
+const char* WIFI_PASSWORD = "YOUR_PASSWORD";
+
+const char* API_URL =
+  "API_URL_FOR_DATABASE";
+
+const char* API_KEY = "API_KEY_FOR_DATABASE";
+
+// Must match a device with an active DEVICE_ASSIGNMENT.
+constexpr unsigned long DEVICE_ID = 1;
+
+// These must match your Oracle handler.
+const char* API_KEY_HEADER = "X-API-Key";
+const char* TEMPERATURE_FIELD = "skin_temp";
+
+// Paste the PEM root CA certificate for the API host here.
+// HTTPS uploads will fail until a valid certificate is supplied.
+static const char ROOT_CA[] PROGMEM = R"PEM(
+-----BEGIN CERTIFICATE-----
+PASTE_ROOT_CA_CERTIFICATE_HERE
+-----END CERTIFICATE-----
+)PEM";
+
+// ================= CONNECTIONS =================
+
+constexpr int HEART_PIN = 14;  // D5; DFRobot switch set to D
+constexpr int SDA_PIN = 4;     // D2
+constexpr int SCL_PIN = 5;     // D1
+
+// ================= FEVER CLICK =================
+
+constexpr uint8_t FEVER_ADDRESS = 0x48;
+constexpr uint8_t TEMP_REGISTER = 0x00;
+constexpr uint8_t CONFIG_REGISTER = 0x01;
+
+bool feverConfigured = false;
+
+// ================= HEART RATE =================
+
+// Capture pulse edges using an interrupt so HTTPS requests
+// do not interrupt the main loop's pulse counting.
+constexpr uint8_t AVERAGE_SIZE = 5;
+constexpr uint32_t MIN_INTERVAL_US = 250000;
+constexpr uint32_t SIGNAL_TIMEOUT_US = 3000000;
+
+volatile uint32_t beatIntervals[AVERAGE_SIZE] = {};
+volatile uint8_t intervalCount = 0;
+volatile uint8_t nextIndex = 0;
+volatile uint32_t lastBeatUs = 0;
+volatile bool havePreviousBeat = false;
+
+void IRAM_ATTR onHeartPulse() {
+  const uint32_t now = micros();
+
+  if (!havePreviousBeat) {
+    lastBeatUs = now;
+    havePreviousBeat = true;
+    return;
+  }
+
+  const uint32_t interval = now - lastBeatUs;
+
+  // Reject edges arriving too soon.
+  if (interval < MIN_INTERVAL_US) {
+    return;
+  }
+
+  lastBeatUs = now;
+
+  // Start again after a long signal gap.
+  if (interval > SIGNAL_TIMEOUT_US) {
+    intervalCount = 0;
+    nextIndex = 0;
+    return;
+  }
+
+  beatIntervals[nextIndex] = interval;
+  nextIndex = (nextIndex + 1) % AVERAGE_SIZE;
+
+  if (intervalCount < AVERAGE_SIZE) {
+    ++intervalCount;
+  }
+}
+
+float getHeartRate() {
+  uint32_t snapshot[AVERAGE_SIZE];
+  uint32_t lastBeat;
+  uint8_t count;
+  bool haveBeat;
+  uint32_t now;
+
+  noInterrupts();
+
+  now = micros();
+  lastBeat = lastBeatUs;
+  count = intervalCount;
+  haveBeat = havePreviousBeat;
+
+  for (uint8_t i = 0; i < AVERAGE_SIZE; ++i) {
+    snapshot[i] = beatIntervals[i];
+  }
+
+  // Reset stale data while interrupts remain disabled.
+  if (haveBeat && now - lastBeat > SIGNAL_TIMEOUT_US) {
+    havePreviousBeat = false;
+    intervalCount = 0;
+    nextIndex = 0;
+    haveBeat = false;
+  }
+
+  interrupts();
+
+  if (!haveBeat || count < 3) {
+    return NAN;
+  }
+
+  uint32_t total = 0;
+
+  for (uint8_t i = 0; i < count; ++i) {
+    total += snapshot[i];
+  }
+
+  if (total == 0) {
+    return NAN;
+  }
+
+  return 60000000.0f * count / total;
+}
+
+// ================= TEMPERATURE =================
+
+bool configureFever() {
+  Wire.beginTransmission(FEVER_ADDRESS);
+  Wire.write(CONFIG_REGISTER);
+  Wire.write(uint8_t(0x00));
+
+  return Wire.endTransmission() == 0;
+}
+
+bool readTemperature(float& temperatureC) {
+  Wire.beginTransmission(FEVER_ADDRESS);
+  Wire.write(TEMP_REGISTER);
+
+  if (Wire.endTransmission() != 0) {
+    return false;
+  }
+
+  if (Wire.requestFrom(FEVER_ADDRESS, uint8_t(2)) != 2) {
+    while (Wire.available()) {
+      Wire.read();
+    }
+
+    return false;
+  }
+
+  uint16_t raw = uint16_t(Wire.read()) << 8;
+  raw |= uint16_t(Wire.read());
+
+  temperatureC = static_cast<int16_t>(raw) / 256.0f;
+
+  return isfinite(temperatureC);
+}
+
+// ================= TIMING =================
+
+constexpr uint32_t OUTPUT_INTERVAL_MS = 1000;
+constexpr uint32_t UPLOAD_INTERVAL_MS = 10000;
+
+uint32_t lastOutputMs = 0;
+uint32_t lastUploadAttemptMs = 0;
+
+float latestTemperature = NAN;
+bool temperatureOK = false;
+
+// ================= WIFI =================
+
+void setupWiFi() {
+  WiFi.persistent(false);
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+  // Required for HTTPS certificate validity checks.
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+
+  Serial.println("Connecting to Wi-Fi...");
+}
+
+void reportWiFiStatus() {
+  static bool previouslyConnected = false;
+
+  const bool connected =
+    WiFi.status() == WL_CONNECTED;
+
+  if (connected && !previouslyConnected) {
+    Serial.print("Wi-Fi connected. IP: ");
+    Serial.println(WiFi.localIP());
+  } else if (!connected && previouslyConnected) {
+    Serial.println("Wi-Fi disconnected.");
+  }
+
+  previouslyConnected = connected;
+}
+
+// ================= ORACLE UPLOAD =================
+
+void uploadReadings(float heartRate, float temperatureC) {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Upload skipped: Wi-Fi not connected.");
+    return;
+  }
+
+  if (time(nullptr) < 1700000000) {
+    Serial.println("Upload skipped: waiting for network time.");
+    return;
+  }
+
+  if (!isfinite(heartRate) ||
+      heartRate <= 0 ||
+      !isfinite(temperatureC)) {
+    Serial.println("Upload skipped: invalid sensor readings.");
+    return;
+  }
+
+  BearSSL::X509List trustedCA(ROOT_CA);
+  BearSSL::WiFiClientSecure client;
+
+  client.setTrustAnchors(&trustedCA);
+
+  HTTPClient http;
+  http.setTimeout(5000);
+
+  if (!http.begin(client, API_URL)) {
+    Serial.println("Could not initialise HTTPS.");
+    return;
+  }
+
+  http.addHeader("Content-Type", "application/json");
+  http.addHeader(API_KEY_HEADER, API_KEY);
+
+  String payload;
+  payload.reserve(150);
+
+  payload = "{\"device_id\":";
+  payload += String(DEVICE_ID);
+
+  payload += ",\"heart_rate\":";
+  payload += String(static_cast<int>(roundf(heartRate)));
+
+  payload += ",\"";
+  payload += TEMPERATURE_FIELD;
+  payload += "\":";
+  payload += String(temperatureC, 1);
+
+  payload += "}";
+
+  Serial.println("Uploading sensor readings...");
+
+  const int statusCode = http.POST(payload);
+
+  if (statusCode >= 200 && statusCode < 300) {
+    Serial.printf(
+      "Server returned success: HTTP %d\n",
+      statusCode
+    );
+  } else if (statusCode > 0) {
+    Serial.printf(
+      "Upload rejected: HTTP %d\n",
+      statusCode
+    );
+
+    // Useful for diagnosing assignment/validation errors.
+    // Do not share responses containing personal data.
+    String response = http.getString();
+
+    if (response.length() > 0) {
+      Serial.println(response.substring(0, 500));
+    }
+  } else {
+    Serial.print("Upload failed: ");
+    Serial.println(
+      HTTPClient::errorToString(statusCode)
+    );
+  }
+
+  http.end();
+}
+
+// ================= SERIAL OUTPUT =================
+
+void outputMeasurements() {
+  temperatureOK = false;
+
+  if (!feverConfigured) {
+    feverConfigured = configureFever();
+    // Wait until the next cycle for a fresh conversion.
+  } else {
+    temperatureOK = readTemperature(latestTemperature);
+
+    if (!temperatureOK) {
+      feverConfigured = false;
+      latestTemperature = NAN;
+    }
+  }
+
+  const float heartRate = getHeartRate();
+
+  Serial.print("Heartrate: ");
+
+  if (isfinite(heartRate)) {
+    Serial.println(heartRate, 0);
+  } else {
+    Serial.println("NA");
+  }
+
+  Serial.print("Temperature: ");
+
+  if (temperatureOK) {
+    Serial.println(latestTemperature, 1);
+  } else {
+    Serial.println("NA");
+  }
+
+  Serial.println();
+}
+
+// ================= SETUP =================
+
+void setup() {
+  Serial.begin(115200);
+  delay(500);
+
+  pinMode(HEART_PIN, INPUT);
+
+  Wire.begin(SDA_PIN, SCL_PIN);
+  Wire.setClock(50000);
+
+  feverConfigured = configureFever();
+  delay(100);
+
+  attachInterrupt(
+    digitalPinToInterrupt(HEART_PIN),
+    onHeartPulse,
+    RISING
+  );
+
+  Serial.println();
+  Serial.println("DFRobot + Fever click + Oracle");
+  Serial.println("DFRobot switch must be set to D.");
+
+  setupWiFi();
+}
+
+// ================= LOOP =================
+
+void loop() {
+  reportWiFiStatus();
+
+  uint32_t now = millis();
+
+  if (now - lastOutputMs >= OUTPUT_INTERVAL_MS) {
+    lastOutputMs = now;
+    outputMeasurements();
+  }
+
+  now = millis();
+
+  if (now - lastUploadAttemptMs >= UPLOAD_INTERVAL_MS) {
+    lastUploadAttemptMs = now;
+
+    const float heartRate = getHeartRate();
+
+    if (temperatureOK && isfinite(heartRate)) {
+      uploadReadings(heartRate, latestTemperature);
+    } else {
+      Serial.println(
+        "Upload skipped: waiting for valid readings."
+      );
+    }
+  }
+
+  delay(1);
+}
