@@ -20,7 +20,7 @@ Pulse helps patients and staff stay connected while patients wait in A&E. Patien
 | Wristband | ESP32-WROOM-32, heart-rate and temperature sensors, LCD display and LiPo battery (team hardware prototype) |
 | Database | Oracle Database, Oracle APEX and a protected read-only ORDS API |
 | Website | Python 3.12+, Flask, Jinja2, HTML, CSS and SVG icons/charts |
-| AI training | |
+| AI training | Python, pandas, NumPy, scikit-learn, Matplotlib and Google Colab |
 | Tests and checks | pytest, Python Playwright/Chromium, Ruff and GitHub Actions |
 
 ## How to run the website
