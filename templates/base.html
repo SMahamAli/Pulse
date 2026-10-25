@@ -1,0 +1,70 @@
+{% from 'macros.html' import icon,brand,flashes with context %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+{% if auto_refresh %}<meta http-equiv="refresh" content="{{auto_refresh}};url={{url_for('garmin_readings')}}">{% endif %}
+<meta name="theme-color" content="#101416">
+<meta name="description" content="Pulse healthcare hackathon prototype — synthetic patient and staff journeys.">
+<title>{{title}} · Pulse</title>
+<link rel="stylesheet" href="{{url_for('static',filename='styles.css')}}">
+<link rel="icon" href="{{url_for('static',filename='favicon.svg')}}">
+</head>
+<body>
+<input class="visually-hidden" id="motion-pause" type="checkbox" aria-label="Pause decorative animation">
+<div class="demo-bar">
+<span>
+<i>
+</i> {{'Oracle database - stored demo records' if page=='oracle_patients' else 'Local Garmin owner preview' if auto_refresh else 'Demo - synthetic data'}}</span>
+<span>{{'Account-owner data - no clinical decisions' if auto_refresh else 'Hackathon prototype - No real accounts or clinical decisions'}}</span>
+<label class="motion-control" for="motion-pause">Pause / resume animation</label>
+</div>
+{% if role %}<div class="app-shell">
+<aside class="sidebar">{{brand()}}<div class="workspace-label">{{'PATIENT PORTAL' if role=='patient' else 'ADMIN WORKSPACE' if role=='admin' else 'CARE TEAM WORKSPACE'}}</div>
+<nav aria-label="Main navigation">{% for label,endpoint,symbol in nav %}<a href="{{url_for(endpoint)}}" class="{{'active' if navigation_page==endpoint else ''}}" {% if navigation_page==endpoint %}aria-current="page"{% endif %} title="{{label}}" aria-label="{{label}}">{{icon(symbol)}}<span>{{label}}</span>{% if endpoint=='chat' and chat_unread %}<span class="nav-count">{{chat_unread}}</span>{% endif %}{% if endpoint=='inbox' and counts.messages %}<span class="nav-count">{{counts.messages}}</span>{% endif %}</a>{% endfor %}</nav>
+<div class="sidebar-bottom">
+<div class="avatar">{{'G' if auto_refresh else patient.name[:1] if role=='patient' else 'AD' if role=='admin' else 'JE'}}</div>
+<div>
+<strong>{{'Garmin owner preview' if auto_refresh else patient.name if role=='patient' else 'Demo administrator' if role=='admin' else 'Jordan Ellis'}}</strong>
+<small>Demo {{role}}</small>
+</div>
+<form method="post" action="{{url_for('logout')}}">
+<input type="hidden" name="csrf" value="{{csrf}}">
+<button class="icon-button" aria-label="Log out">{{icon('logout')}}</button>
+</form>
+</div>
+</aside>
+<div class="workspace">
+<header>
+<div class="breadcrumb">Pulse {{icon('chevron',13)}} {{title}}</div>
+<div class="header-actions">
+<span class="demo-dot">
+</span>Prototype workspace<form method="post" action="{{url_for('logout')}}">
+<input type="hidden" name="csrf" value="{{csrf}}">
+<button class="text-button">Switch demo role</button>
+</form>
+</div>
+</header>
+<main>
+{% if show_back %}<a class="back-link" href="{{back_url}}">{{icon('chevron',14)}} Back to {{back_label}}</a>{% endif %}
+<div class="page-heading">
+<div>
+<div class="eyebrow">{{'MAHAM’S ORACLE DATABASE - LOCAL READ-ONLY PREVIEW' if page=='oracle_patients' else 'GARMIN ACCOUNT OWNER - LOCAL PREVIEW' if auto_refresh else 'YOUR CARE, CONNECTED' if role=='patient' else 'PULSE ADMINISTRATION' if role=='admin' else 'PULSE · DEMO CARE NETWORK'}}</div>
+<h1>{{title}}</h1>
+<p>{{'Synced account data, separate from fictional patient visits.' if auto_refresh else 'Your visit information, all in one place.' if role=='patient' else 'Manage access, review activity and support your team.' if role=='admin' else 'Stay connected to patients. Keep human judgement at the heart of care.'}}</p>
+</div>{% if role=='staff' and page!='oracle_patients' %}<a class="primary" href="{{url_for('assisted')}}">{{icon('plus',17)}} Register patient</a>{% endif %}</div>{{flashes()}}{% endif %}
+{% block content %}{% endblock %}
+{% if role %}<footer>
+<span>{{icon('activity',14)}} Pulse · Care, connected.</span>
+<span>{{'Oracle stored demo data - Read only' if page=='oracle_patients' else 'Account-owner data - Not clinically validated' if auto_refresh else 'Synthetic information only - Not clinically validated'}}</span>
+</footer>
+<form class="reset-form" method="post" action="{{url_for('reset')}}">
+<input type="hidden" name="csrf" value="{{csrf}}">
+<button class="text-button">Reset this browser's demo</button>
+</form>
+</main>
+</div>
+</div>{% endif %}
+</body>
+</html>

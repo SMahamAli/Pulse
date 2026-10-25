@@ -1,60 +1,55 @@
 # Pulse - Wearable Patient Monitoring for A&E
 
-Built at AI IN HEALTHCARE HACKATHON 
+Built at the AI IN HEALTHCARE HACKATHON.
 
-Collaborators:
-- Elysha Ruddock
-- Mohammed Sherif
-- Mostafa Issa
-- Maham Ali
+## Our team
 
-The problem
+- Mohammed Sherif - Website
+- Mostafa Issa - Hardware
+- Maham Ali - Database
+- Elysha Ruddock - AI
 
-Patients can wait in NHS A&E waiting rooms for hours after triage. Their condition can get worse during that time without any one noticing, due to staff not been able to watch everyone in a busy waiting room. 
+## The idea
 
-Our solution
+Pulse helps patients and staff stay connected while patients wait in A&E. Patients choose a hospital, fill in an intake form, view their visits and chat with staff. Staff confirm arrival, assign a wristband and review readings or requests for help.
 
-Each patient is given a wristband when they're triaged. The band continuously records:
-- Heart rate
-- Blood oxygen(spO2)
-- Respiratory rate
-- Skin temperature
-- Falls
+## Technology
 
-Tech stack 
 | Part | Technology |
-|---|---|
-Wristband |ESP32-WROOM-32, Accelerometer MPU-6050, Oximeter & heart rate sensor, Fever Click Board MIKROE-2554, Wristband, LCD Display, Small 3.7V LiPo-300
-| Database | Oracle (built in Oracle APEX) | 
-| Website | 
-| AI Training |
+| --- | --- |
+| Wristband | ESP32-WROOM-32, heart-rate and temperature sensors, LCD display and LiPo battery (team hardware prototype) |
+| Database | Oracle Database, Oracle APEX and a protected read-only ORDS API |
+| Website | Python 3.12+, Flask, Jinja2, HTML, CSS and SVG icons/charts; no application JavaScript |
+| AI training | Python notebook, Jupyter/Google Colab, pandas, NumPy, scikit-learn and Matplotlib |
+| Tests and checks | pytest, Python Playwright/Chromium, Ruff and GitHub Actions |
+| Optional services | Garmin Personal API for the owner's synced heart rate; Postcodes.io for postcode districts; Google Maps directions links |
 
-The readings go to a live dashboard that staff can watch. The system:
-- Combines wristband data with staff observations to calculate an early warning score.
-- Raises an alert when a patient crosses a threshold.
-- allows staff to acknowledge and resolve alerts while keeping a record of who responded and when.
+## What works now
 
-Features
+Patient Home, My visits, postcode search, intake forms, staff check-in, demo band management, human Chat and admin profiles/activity. Staff Home is a summary; Patients has clearly labelled Demo workflow and Oracle records tabs.
 
-- Live overview of every patient in the department, colour coded by triage category.
-- Latest vitals for each patient.
-- Trend charts so staff can see whether a patient is getting worse.
-- Alerts sorted by severity.
-- Logins with different roles (Doctor, nurse, patient, admin, receptionist)
+Oracle records use the same names and IDs as Maham's stored demonstration data. The separate demo workflow uses fictional fixtures such as Alex and Jamie, plus forms you enter. It does not save forms or chats to Oracle yet. Heart rate and skin temperature are the supported measurements. Real hardware transmission and AI inference still need integration.
 
-Demo Logins
+Demo role buttons are not secure accounts. Demo records survive refresh but reset when you reset/restart the app. Separate browsers do not share demo records. Hospital counts are simulated; selecting a hospital is not a booking or notification to a real hospital. Private credentials are never included in GitHub.
 
-| Role | Email | Password |
-|---|---|---|
-| Nurse | priya.patel@demo-nhs.test | priya1 |
-| Doctor | sarah.whitfield@demo-nhs.test | sarah1 |
-| Nurse in Charge | michael.grant@demo-nhs.test | michael1 |
-| Admin | rachel.adams@demo-nhs.test | rachel1 |
+More details: [Integration](docs/INTEGRATION.md), [checks](docs/manual-testing.md) and [developer commands](docs/development-guide.md). Maham's SQL and Elysha's notebook are preserved. Do not run the SQL setup just to start the website.
 
-Demo scenario
+## How to run the website
 
-The demo data covers one simulated shift with 14 patients.
-Things to look for:
+1. Install **Python 3.12 or newer** from [python.org](https://www.python.org/downloads/). On Windows, tick **Add Python to PATH**.
+2. Download this project and open its folder in VS Code. Choose **Terminal > New Terminal**. VS Code is optional.
+3. Install the requirements:
 
-Data and privacy
-All patient data in the repository
+```powershell
+python -m pip install -r requirements.txt
+```
+
+4. Start the website:
+
+```powershell
+python app.py
+```
+
+5. Open **http://127.0.0.1:5000/** and choose **Demo patient**, **Demo staff** or **Demo admin**. Keep the terminal open. Press **Ctrl + C** to stop it. The same commands work on Mac/Linux.
+
+Try **Hospitals > LS6 > choose a hospital > submit intake > My visits**. Switch roles in the same browser to demonstrate staff check-in and Chat replies. Core demo features need no database key. Oracle and Garmin require private local configuration.

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}{% from 'macros.html' import badge,trace,readings,command,updates,urgent,icon,intake_summary with context %}{% block content %}{% set hospital=(data.hospitals|selectattr('id','equalto',v.hospital)|list|first) %}{% set device=(data.devices|selectattr('id','equalto',v.device)|list|first) %}<section class="visit-banner">
+<div>{{badge(v.status)}}<h2>Hello, {{v.name.split(' ')[0]}}.</h2>
+<p>{{hospital.name if hospital else 'Choose a hospital to begin your visit.'}} · {{v.id}}</p>
+</div>
+<div class="visit-rhythm">{{trace()}}<small>Pulse · Care, connected</small>
+<span class="rhythm-footnote">Decorative waveform</span>
+</div>
+</section>
+<section class="visit-progress" aria-label="Visit progress">{% if v.status=='closed' %}<h2>Visit closed</h2>
+<p>Any assigned Pulse band has been released.</p>{% else %}{% set steps=[('Hospital selected',v.hospital,'Your choice, not a booking'),('Intake submitted',v.intake,'Information shared with staff'),('Arrival confirmed',v.arrival,'Confirmed in person by staff'),('Device assigned',v.device,'Reading availability shown below')] %}<div class="progress-heading">
+<h2>Your visit, step by step</h2>
+<span>Recorded visit information</span>
+</div>
+<ol>{% for label,done,detail in steps %}<li class="{{'complete' if done else ''}}">
+<span class="step-marker" aria-hidden="true">{{'✓' if done else loop.index}}</span>
+<div>
+<strong>{{label}}</strong>
+<small>{{detail}}</small>
+<span class="step-state">{{'Recorded' if done else 'Pending'}}</span>
+</div>
+</li>{% endfor %}</ol>{% endif %}</section>
+{% if v.status=='closed' %}<a class="primary" href="{{url_for('hospitals')}}">Plan another visit {{icon('arrow',16)}}</a>{% elif not v.hospital %}<a class="primary" href="{{url_for('hospitals')}}">Compare hospitals {{icon('arrow',16)}}</a>{% elif not v.intake %}<div class="notice">Complete intake before staff check-in. <a class="text-button" href="{{url_for('intake',reference=v.id)}}">Complete intake</a>
+</div>{% endif %}
+<div class="three-grid">
+<section class="panel" aria-label="Waiting duration">{{icon('clock',24)}}<h3>Time already waiting</h3>
+<div class="big-number">{{waiting(v.arrival,v.get('closedAt'))}}</div>
+<p>{{'Arrival confirmed by demo staff at ' ~ time(v.arrival) if v.arrival else 'Starts only when staff confirm your arrival.'}}</p>
+</section>
+<section class="panel">
+<h3>Estimated time until seen</h3>
+<div class="big-number">{{v.estimate or 'Unavailable'}}</div>
+<p>Separate from elapsed waiting time. Estimates can change as urgent cases arrive.</p>
+</section>
+<section class="panel">
+<h3>Your waiting area</h3>
+<strong>{{v.destination.text if v.destination else 'Awaiting staff confirmation'}}</strong>
+<p>{{'Confirmed by ' ~ v.destination.by ~ ' at ' ~ time(v.destination.time) if v.destination else 'Speak with staff when you arrive. Movement instructions appear after staff confirmation.'}}</p>
+</section>
+</div>
+<div class="section-heading">
+<h2>Your latest readings</h2>{{badge(device_status(device,data.readings.get(v.id,[])))}}</div>{{readings(v)}}
+<div class="two-grid">
+<section class="panel">
+<h2>Stay connected to your care team</h2>
+<p>Messages go to human staff. Submission does not guarantee immediate review.</p>{% set unread=data.messages|selectattr('visit','equalto',v.id)|selectattr('sender','equalto','staff')|rejectattr('read')|list|length %}<div class="button-row">
+<a class="primary" href="{{url_for('messages')}}">{{icon('message',17)}} Messages ({{unread}} unread)</a>
+{% if v.status!='closed' %}<a class="secondary" href="{{url_for('symptoms',reference=v.id)}}">Report new symptoms</a>{% else %}<span>Visit closed: new messages and symptom updates are unavailable.</span>{% endif %}{{command('help','Request assistance',v.id,'patient',disabled=v.status=='closed')}}</div>{{urgent()}}</section>
+<section class="panel">
+<h2>Your Pulse device</h2>
+<p>{{device.type ~ ' · ' ~ device.id if device else 'Staff can assign a Pulse band after check-in.'}}</p>
+<p>Personal wearable integrations are unavailable. The Fitbit example is explicitly simulated.</p>
+<a class="text-button" href="{{url_for('devices')}}">View device options →</a>
+</section>
+</div><section class="panel" id="original-intake"><div class="section-heading"><h2>Your original intake form</h2><a class="secondary" href="{{url_for('visits')}}">View all my visits</a></div>{% if v.intake %}{{intake_summary(v.intake)}}{% else %}<p>No intake form submitted for this visit yet.</p>{% endif %}</section>{{updates(v)}}{% endblock %}

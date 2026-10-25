@@ -1,0 +1,51 @@
+{% extends 'base.html' %}{% from 'macros.html' import badge,command,readings,chart,updates with context %}{% block content %}<section class="panel">
+<div class="section-heading">
+<div>
+<h2>{{v.name}} <span class="count">{{v.id}}</span>
+</h2>
+<p>DOB {{v.dob}} · {{v.status}} · Arrival {{time(v.arrival,true) if v.arrival else 'Not confirmed'}} · Waiting {{waiting(v.arrival,v.get('closedAt'))}}</p>
+{% set hospital=data.hospitals|selectattr('id','equalto',v.hospital)|list|first %}<p>Selected hospital: <strong>{{hospital.name if hospital else 'Not selected'}}</strong></p>
+</div>{{badge(v.category)}}</div>
+{% set available=data.devices|rejectattr('visit')|selectattr('type','equalto','Pulse band')|list %}
+<div class="button-row">{{command('check_in','Confirm arrival',v.id,'details',disabled=v.arrival is not none or not v.hospital or not v.intake or v.status=='closed',primary=true)}}{% call command('assign','Assign band',v.id,'details',disabled=v.device is not none or not v.arrival or v.status=='closed' or not available) %}<select name="device" aria-label="Available band" required>
+<option value="">Choose an available band</option>{% for device in available %}<option>{{device.id}}</option>{% endfor %}</select>{% endcall %}{{command('close','Close visit / release band',v.id,'details',disabled=v.status=='closed')}}</div>
+{% if not v.hospital or not v.intake %}<p>Select a hospital and complete intake before confirming arrival.</p>{% endif %}
+{% if not available and not v.device and v.status!='closed' %}<p>No Pulse bands are available. Releasing a band from a closed visit makes it available again.</p>{% endif %}
+<p>Assigned device: {{v.device or 'None'}} · Suggested department: {{v.assessment.get('department','Not supplied')}} · Confirmed destination: {{v.destination.text if v.destination else 'Not confirmed'}}</p>
+</section>
+{% if not v.hospital %}<section class="panel">
+<h2>Choose hospital for assisted registration</h2>
+<div class="button-row">{% for hospital in data.hospitals %}{{command('hospital',hospital.name,v.id,'details',{'hospital':hospital.id})}}{% endfor %}</div>
+</section>{% endif %}<section class="panel">
+<h2>Original intake</h2>{% if v.intake %}<dl>{% for key,value in v.intake.items() if value %}<div>
+<dt>{{key}}</dt>
+<dd>{{value}}</dd>
+</div>{% endfor %}</dl>{% else %}<p>Intake not submitted.</p>
+{% if v.hospital and v.status!='closed' %}<a class="primary" href="{{url_for('intake',reference=v.id)}}">Record intake</a>{% elif v.status=='closed' %}<p>This visit is closed.</p>{% else %}<p>Choose a hospital above to open the intake form.</p>{% endif %}{% endif %}</section>{{readings(v)}}<section class="panel">
+<h2>Reading trends</h2>
+<p>Separate scales · synthetic samples, no diagnostic thresholds.</p>
+<div class="three-grid">{% for metric in metrics %}<div>
+<h3>{{metric.label}} · {{metric.unit}}</h3>{{chart(data.readings.get(v.id,[]),metric)}}</div>{% endfor %}</div>
+</section>
+<div class="two-grid">
+<section class="panel">
+<h2>Experimental assessment</h2>{{badge(v.assessment.state ~ (' · synthetic output' if v.assessment.state=='completed' else ' · not completed'))}}<h3>{{v.assessment.get('category','No recommendation supplied')}}</h3>
+<p>{{v.assessment.get('explanation','Awaiting an agreed assessment service. No completed result is fabricated.')}}</p>{% if v.assessment.get('version') %}<small>Model version: {{v.assessment.version}}</small>{% endif %}{% call command('decision','Record staff decision',v.id,'details',primary=true) %}<label class="field">Staff-confirmed category<input name="category" required value="Staff review complete">
+</label>
+<label class="field">Review / override reason<textarea name="reason" required>
+</textarea>
+</label>{% endcall %}</section>
+<section class="panel">
+<h2>Confirm a destination</h2>
+<p>Only a staff-confirmed destination appears as patient movement guidance.</p>{% call command('destination','Confirm destination',v.id,'details',primary=true) %}<label class="field">Confirmed department / waiting area<input name="text" required>
+</label>{% endcall %}<h3>Staff notes</h3>{% for note in v.notes %}<p>{{note.text}}<small>{{note.by}} · {{time(note.time,true)}}</small>
+</p>{% endfor %}{% call command('note','Add note',v.id,'details') %}<label class="field">New staff note<textarea name="text" required>
+</textarea>
+</label>{% endcall %}</section>
+</div>{{updates(v,true)}}<section class="panel">
+<h2>Care team conversation</h2>
+<p>Human messages, help requests and symptom updates for {{v.id}}.</p>
+<a class="primary" href="{{url_for('messages',reference=v.id)}}">Open conversation</a>
+</section>
+<section class="panel">
+<h2>Alert / assistance history</h2>{% for alert in data.alerts if alert.visit==v.id %}<p>{{badge(alert.kind)}} {{alert.text}} · {{time(alert.time,true)}} · {{'Acknowledged' if alert.ack else 'Active'}}</p>{% else %}<p>No alert history.</p>{% endfor %}</section>{% endblock %}

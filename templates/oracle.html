@@ -1,0 +1,26 @@
+{% extends 'base.html' %}{% from 'macros.html' import badge,icon with context %}
+{% block content %}{% include 'patient_sources.html' %}
+<section class="visit-banner"><div><div class="eyebrow">ORACLE · READ ONLY</div><h2>Database patient records</h2><p>Patient names, readings and alerts from Maham's stored demonstration data.</p></div>{{icon('users',40)}}</section>
+<div class="notice">Recorded triage comes from the database, not an AI assessment. Measurement timezone and device connectivity are unconfirmed, so this view does not calculate waiting duration or claim a live device connection.</div>
+<p><a class="secondary" href="{{url_for('oracle_patients')}}">Refresh Oracle data</a> {{badge('Connected · read only' if oracle_data else oracle_configuration)}}</p>
+{% if oracle_error %}<div class="notice error" role="alert">{{oracle_error}} No mock rows are substituted for failed Oracle requests.</div>{% endif %}
+{% if oracle_data %}
+<div class="stats-admin"><section class="stat"><div>Current patients</div><strong>{{oracle_data.patients|length}}</strong><small>Stored database records</small></section><section class="stat"><div>Latest readings</div><strong>{{oracle_data.readings|length}}</strong><small>Matched to active band assignments</small></section><section class="stat"><div>Open/acknowledged alerts</div><strong>{{oracle_data.alerts|length}}</strong><small>Recorded database events</small></section><section class="stat"><div>Last refreshed</div><strong style="font-size:18px">{{time(oracle_data.fetchedAt)}}</strong><small>Refresh time, not measurement time</small></section></div>
+<section class="panel"><h2>Current patients</h2><p>Scroll sideways for all columns on small screens.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Oracle current patients"><table><thead><tr><th>Database patient</th><th>Status / recorded triage</th><th>Arrival / area</th><th>Assignment / device</th><th>Latest supported readings</th></tr></thead><tbody>
+{% for v in oracle_data.patients %}
+{% set readings=oracle_data.readings|selectattr('patientId','equalto',v.databasePatientId)|selectattr('assignmentId','equalto',v.assignmentId)|list %}
+{% set reading=(readings|first) if v.assignmentId else none %}
+<tr>
+<td><strong>{{v.name}}</strong><small>Oracle patient {{v.databasePatientId}} · Age {{v.age|int if v.age is not none else 'unavailable'}}</small><p>{{v.presentingComplaint}}</p></td>
+<td>{{badge(v.databaseStatus)}}<small>{{v.recordedTriage or 'Triage unavailable'}}</small></td>
+<td>{{v.arrival or 'Not supplied'}}<small>Database time · timezone unconfirmed</small><small>{{v.recordedZone or 'Area unavailable'}}</small></td>
+<td>{{v.assignmentId or 'No active assignment'}}<small>Device {{v.deviceId or 'unassigned'}} · connectivity not verified</small></td>
+<td>{% if reading %}
+{% if reading.heartRate is not none %}{{reading.heartRate}} bpm{% else %}Heart rate unavailable{% endif %}
+<small>{% if reading.temperature is not none %}Skin temperature {{reading.temperature}} °C{% else %}Skin temperature unavailable{% endif %}</small>
+<small>Measured {{reading.time or 'time unavailable'}} · timezone unconfirmed</small>
+{% else %}No readings supplied for this active assignment{% endif %}</td>
+</tr>{% else %}<tr><td colspan="5">No current patients returned by the database view.</td></tr>{% endfor %}</tbody></table></div></section>
+<section class="panel"><h2>Database alerts</h2>{% for alert in oracle_data.alerts %}<article class="inbox-row"><div><h3>{{alert.patientName}} · Oracle patient {{alert.databasePatientId}}</h3><p>{{alert.text}}</p><small>{{alert.time}} · database time, timezone unconfirmed</small><small>Acknowledged by {{alert.acknowledgedBy or 'not supplied'}}; acknowledgement time not supplied by this view</small></div><div>{{badge(alert.databaseStatus)}}{{badge(alert.suppliedSeverity)}}</div></article>{% else %}<p>No open/acknowledged alerts returned.</p>{% endfor %}</section>
+{% else %}<section class="panel">{% if oracle_configuration == 'Configured locally' %}<h2>Oracle records unavailable</h2><p>The private backend connection is configured, but the database request failed. Check the source tables/views and API permissions, then refresh. No database records are displayed until the request succeeds.</p>{% else %}<h2>Oracle connection pending</h2><p>Flask needs its own protected API client credentials to load these views. They belong in private server configuration, never in this page.</p>{% endif %}</section>{% endif %}
+{% endblock %}

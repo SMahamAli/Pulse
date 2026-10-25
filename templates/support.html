@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import field,badge,urgent with context %}
+{% block content %}
+<div class="notice">Human support for portal, account or service questions. Do not include medical details here. For new symptoms or care requests use the care-team messages; for urgent concerns alert nearby staff. Sending a support message does not guarantee immediate review. Refresh to check for replies.</div>
+<div class="support-layout">
+<section class="panel"><div class="section-heading"><h2>Conversations</h2><a class="text-button" href="{{url_for('support')}}">New conversation</a></div>
+{% for item in threads %}
+<a class="support-thread {{'selected' if thread and item.id==thread.id else ''}}" href="{{url_for('support',identifier=item.id)}}"><strong>{{item.subject}}</strong><small>{{item.id}} · {{item.participants|join(' ↔ ')}}{% if item.patientId %} · {{item.patientId}}{% endif %}</small><small>{{time(item.messages[-1].time,true)}}</small>{% for message in item.messages if role not in message.readBy %}<span class="badge warning">Unread {{message.role}} message</span>{% endfor %}</a>
+{% else %}<p>No support conversations yet.</p>{% endfor %}
+</section>
+<section class="panel">
+{% if thread %}<h2>{{thread.subject}}</h2><p>{{thread.id}} · {{thread.participants|join(' ↔ ')}}{% if thread.patientId %} · Patient reference {{thread.patientId}}{% endif %}</p>
+<form method="post"><input type="hidden" name="csrf" value="{{csrf}}"><input type="hidden" name="intent" value="read"><button class="secondary">Mark conversation read</button></form>
+<div class="messages">{% for message in thread.messages %}<article class="message {{'staff-message' if message.role=='admin' else ''}}"><strong>Demo {{message.role}}</strong><small>{{time(message.time,true)}}</small><p>{{message.text}}</p><small>Sent{% if message.readBy|length>1 %} · read by the other demo role{% else %} · no read confirmation{% endif %}</small></article>{% endfor %}</div>
+<form method="post"><input type="hidden" name="csrf" value="{{csrf}}"><label class="field" for="support-reply">Your support reply</label><textarea id="support-reply" name="text" required maxlength="2000">{{request.form.get('text','') if request.method=='POST' else ''}}</textarea><button class="primary">Send support reply</button></form>
+{% else %}<h2>{{'Contact a patient' if role=='admin' and contact_role=='patient' else 'Contact the staff team' if role=='admin' else 'Contact administration'}}</h2><p>For account and portal questions. Care discussions stay with the patient's care team.</p>
+<form method="post"><input type="hidden" name="csrf" value="{{csrf}}">{% if role=='admin' %}<input type="hidden" name="target" value="{{contact_role}}">{% if contact_role=='patient' %}{{field('Demo patient reference','patient_reference',value=request.form.get('patient_reference',''),required=true)}}<p>Use a portal reference such as P-2041, not an Oracle database ID.</p>{% endif %}{% endif %}{{field('Subject','subject',value=request.form.get('subject',''),required=true)}}<label class="field" for="support-text">Your support message</label><textarea id="support-text" name="text" required maxlength="2000">{{request.form.get('text','')}}</textarea><button class="primary">Send support message</button></form>{% endif %}
+<p class="table-note">Demo conversations belong to this browser's server-memory workspace. Switch demo roles in the same browser to demonstrate replies. Other browsers/devices do not synchronise.</p>
+</section></div>
+{% endblock %}

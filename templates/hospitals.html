@@ -1,0 +1,35 @@
+{% extends 'base.html' %}{% from 'macros.html' import badge,command,icon with context %}{% block content %}<div class="notice">Fewer people waiting does not guarantee a shorter wait or suitable care. Selection is not a booking or hospital acceptance.</div>
+<div class="postcode-search-page">
+<section>
+{% if v.arrival or v.intake or v.status=='closed' %}<div class="notice">Your existing visit and submitted form stay unchanged. Choosing a hospital below starts a separate planned demo visit and opens a new intake form. It does not transfer a checked-in patient or tell you to leave your current hospital.</div>{% endif %}
+<form class="panel" method="post">
+<input type="hidden" name="csrf" value="{{csrf}}">
+<h2>Find a hospital near you</h2>
+<label class="field" for="postcode">Enter your postcode</label>
+<input id="postcode" name="postcode" placeholder="Enter your postcode, e.g. LS6" maxlength="10" required autocomplete="off" value="{{location.district if location else ''}}" aria-describedby="postcode-help">
+<p id="postcode-help">We use only your postcode district (for example LS6), not your exact address. Other districts use Postcodes.io after you submit. Your search is not saved to your patient record.</p>
+<button class="primary">Search hospitals</button>
+<p>Try LS6 for the Leeds demo, including without internet. Counts are simulated, not live hospital data.</p>
+</form>
+{% if location %}<div class="notice" role="status">Closest supported hospitals to {{location.district}}, sorted by distance. Approximate straight-line miles from the district centre, not travel distance or time. Showing our limited catalogue within 30 miles, not every nearby A&amp;E.<p>Location source: {{location.source}}</p></div>{% endif %}
+<div class="hospital-results">{% for hospital in hospitals %}<article class="panel hospital">
+<div class="section-heading">
+<h2>{{hospital.name}}</h2>{% if hospitals|length>1 and hospital.waiting==fewest_waiting %}{{badge('Fewer waiting · simulated')}}{% endif %}</div>
+<p>{{icon('map',15)}} {{hospital.address}}</p>
+<div class="hospital-numbers">
+<div>
+<strong>{{hospital.get('waitingLabel',hospital.waiting)}}</strong>
+<span>people waiting · simulated</span>
+</div>
+<div>
+<strong class="distance">{{hospital.distance ~ ' mi' if hospital.distance is defined else '—'}}</strong>
+<span>{{'Approx. straight-line distance' if hospital.distance is defined else 'Distance unavailable'}}</span>
+</div>
+</div>
+<p>Count updated {{time(hospital.updated)}} · {{hospital.source}}</p>
+<p>Estimated wait: {{hospital.estimate ~ ' (simulated)' if hospital.estimate else 'Estimate unavailable'}}</p>
+{% if hospital.careNote is defined %}<p>{{hospital.careNote}} <a href="https://www.leedsth.nhs.uk/services/emergency-departments/" target="_blank" rel="noreferrer">Hospital service information</a></p>{% endif %}
+<div class="button-row">{{command('hospital','Start a new visit here' if v.arrival or v.intake or v.status=='closed' else 'Continue with this hospital' if v.hospital==hospital.id else 'Select hospital',v.id,'patient',{'hospital':hospital.id},primary=true)}}<a class="secondary" target="_blank" rel="noreferrer" href="https://www.google.com/maps/dir/?api=1&destination={{hospital.address|urlencode}}">Directions ↗</a>
+</div>
+</article>{% else %}{% if location %}<section class="panel"><h2>No supported hospitals within 30 miles</h2><p>Our prototype catalogue is limited to two Leeds hospitals. This does not mean there are no hospitals near you. Check local emergency services; do not delay emergency care because of this search.</p></section>{% endif %}{% endfor %}</div></section>
+</div>{% endblock %}

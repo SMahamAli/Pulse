@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import badge,icon,intake_summary with context %}
+{% block content %}
+<section class="visit-banner visit-history-banner"><div><div class="eyebrow">YOUR VISIT HISTORY</div><h2>Every visit, in one place.</h2><p>See the hospital, status and intake form for each of your demo visits.</p></div><a class="primary" href="{{url_for('hospitals')}}">{{icon('plus',17)}} Plan a new visit</a></section>
+<div class="notice">A submitted form means planned attendance, not physical check-in. These records stay in this browser's server demo until reset or restart; they are not yet sent to a real hospital.</div>
+<div class="two-grid visit-history">{% for v in visits %}{% set hospital=data.hospitals|selectattr('id','equalto',v.hospital)|list|first %}
+<article class="panel visit-history-card" aria-label="Visit {{v.id}}">
+<div class="section-heading"><h2>{{hospital.name if hospital else 'Hospital not selected'}}</h2>{{badge(v.status)}}</div>
+<p><strong>{{v.id}}</strong>{% if v.id==patient.id %} · Currently selected{% endif %}</p>
+<p>Created {{time(v.created,true)}}<br>{{'Arrival confirmed ' ~ time(v.arrival,true) if v.arrival else 'Arrival not confirmed · waiting has not started'}}</p>
+{% if v.status=='closed' %}<p>Closed {{time(v.get('closedAt'),true) if v.get('closedAt') else 'in the demo'}}</p>{% endif %}
+<p>{{'Intake form submitted' if v.intake else 'Intake form not submitted'}}</p>
+<div class="button-row"><a class="primary" href="{{url_for('patient',visit=v.id)}}">View visit</a>{% if not v.intake and v.hospital and v.status!='closed' %}<a class="secondary" href="{{url_for('intake',reference=v.id)}}">Complete intake</a>{% endif %}</div>
+{% if v.intake %}<details><summary>View submitted intake form</summary>{{intake_summary(v.intake)}}</details>{% endif %}
+</article>{% else %}<section class="panel"><h2>No visits yet</h2><p>Search by postcode to choose a hospital and fill in your first form.</p><a class="primary" href="{{url_for('hospitals')}}">Find a hospital</a></section>{% endfor %}</div>
+{% endblock %}

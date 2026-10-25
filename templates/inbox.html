@@ -1,0 +1,13 @@
+{% extends 'base.html' %}{% from 'macros.html' import badge with context %}{% block content %}<section class="panel">
+<h2>Patient conversations</h2>
+<p>Unreviewed is separate from delivery or patient read status.</p>{% for v in data.visits %}{% set messages=data.messages|selectattr('visit','equalto',v.id)|list %}{% if messages %}<div class="inbox-row">
+<div>
+<strong>{{v.name}} · {{v.id}}</strong>
+<p>{{messages|selectattr('sender','equalto','patient')|rejectattr('reviewed')|list|length}} unreviewed</p>
+<div>{% for message in messages if not message.reviewed and message.sender=='patient' %}{{badge(message.kind)}}{% endfor %}</div>
+</div>
+<div class="button-row">
+<a class="secondary" href="{{url_for('details',reference=v.id)}}">Patient details</a>
+<a class="primary" href="{{url_for('messages',reference=v.id)}}">Open conversation →</a>
+</div>
+</div>{% endif %}{% endfor %}</section>{% endblock %}

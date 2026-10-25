@@ -1,0 +1,44 @@
+{% macro icon(name, size=19) -%}<svg width="{{size}}" height="{{size}}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+<use href="{{url_for('static',filename='icons.svg')}}#{{name}}"/>
+</svg>{%- endmacro %}
+{% macro trace(compact=false) -%}<svg class="pulse-trace{{' compact' if compact else ''}}" viewBox="{{'75 8 90 80' if compact else '0 0 360 96'}}" fill="none" aria-hidden="true">
+<path class="trace-base" d="M0 48H68L81 39L94 56L109 15L124 79L139 39L153 48H207L220 40L232 54L247 22L261 72L276 43L288 48H360"/>
+<path class="trace-light" pathLength="1" d="M0 48H68L81 39L94 56L109 15L124 79L139 39L153 48H207L220 40L232 54L247 22L261 72L276 43L288 48H360"/>
+</svg>{%- endmacro %}
+{% macro brand() %}<div class="brand">
+<span class="brand-mark">{{trace(true)}}</span>pulse<span class="brand-period">.</span>
+</div>{% endmacro %}
+{% macro badge(text) %}<span class="badge {{tone(text)}}">{{text}}</span>{% endmacro %}
+{% macro flashes() %}{% for category,message in get_flashed_messages(with_categories=true) %}<div class="notice {{'error' if category=='error' else ''}}" role="{{'alert' if category=='error' else 'status'}}">{{message}}</div>{% endfor %}{% endmacro %}
+{% macro field(label,name,type='text',value='',required=false) %}<label class="field">{{label}}<input name="{{name}}" type="{{type}}" value="{{value or ''}}" {% if required %}required{% endif %} {% if type=='date' %}max="{{today}}"{% endif %} {% if type=='number' %}step="any"{% endif %} {% if type=='password' %}minlength="8" autocomplete="new-password"{% endif %} maxlength="2000">
+</label>{% endmacro %}
+{% macro command(name,label,visit='',back=page,extras={},disabled=false,primary=false) %}<form class="action-form" method="post" action="{{url_for('action',name=name)}}">
+<input type="hidden" name="csrf" value="{{csrf}}">
+<input type="hidden" name="visit" value="{{visit}}">
+<input type="hidden" name="back" value="{{back}}">{% for key,value in extras.items() %}<input type="hidden" name="{{key}}" value="{{value}}">{% endfor %}{% if caller is defined %}{{caller()}}{% endif %}<button class="{{'primary' if primary else 'secondary'}}" {% if disabled %}disabled{% endif %}>{{label}}</button>
+</form>{% endmacro %}
+{% macro chart(readings,metric) %}{% set series=trend(readings,metric.key) %}<div class="mini-trend">{% if series.count>1 %}<svg viewBox="0 0 300 60" role="img" aria-label="{{metric.label}} synthetic history: {{series.description}}">
+<path class="mini-trend-guide" d="M8 49H292"/>
+<path class="mini-trend-line" d="{{series.path}}"/>
+</svg>
+<div class="trend-caption">
+<span>{{series.count}} synthetic samples</span>
+<span>{{series.low}}–{{series.high}} {{metric.unit}} · own scale</span>
+</div>{% else %}<div class="empty-trend">
+<span class="trend-placeholder" aria-hidden="true">
+</span>
+<small>{{'One sample · more needed for a trend' if series.count else 'No history available'}}</small>
+</div>{% endif %}</div>{% endmacro %}
+{% macro readings(v) %}{% set history=data.readings.get(v.id,[]) %}{% set r=history[0] if history else none %}<div class="metrics-grid">{% for metric in metrics %}<article class="panel metric" aria-label="{{metric.label}}">
+<div class="metric-label">{{metric.label}}{{icon('activity')}}</div>
+<strong>{{r.get(metric.key) if r and finite(r.get(metric.key)) else '—'}} <small>{{metric.unit}}</small>
+</strong>{{badge(metric_status(r,metric.key))}}{{chart(history,metric)}}<p>{{(r.source if metric.key=='temperature' else r.source.replace(' · skin temperature','')) if r and finite(r.get(metric.key)) else 'This device has not supplied this metric.'}}</p>
+<small>Updated: {{time(r.time,true) if r and finite(r.get(metric.key)) else 'Not available'}}</small>
+</article>{% endfor %}</div>{% endmacro %}
+{% macro updates(v,staff=false) %}<section class="panel">
+<h2>Symptom update history <span class="count">{{v.updates|length}}</span>
+</h2>{% for update in v.updates %}<div class="timeline-item">
+<h3>{{update.description}}</h3>
+<p>Started/changed: {{update.onset}} · Submitted {{time(update.time,true)}}</p>{% if update.reviewed %}{{badge('Reviewed by ' ~ update.reviewed.by ~ ' at ' ~ time(update.reviewed.time,true))}}{% elif staff %}{{command('review','Mark reviewed',v.id,'details',{'update':update.id})}}{% else %}{{badge('Review needed · assessment pending')}}{% endif %}</div>{% else %}<p>No new symptom updates.</p>{% endfor %}</section>{% endmacro %}
+{% macro urgent() %}<p class="urgent">Messages may not be reviewed immediately. For urgent concerns, alert nearby staff directly or ask someone nearby for help. A message about leaving does not close your visit.</p>{% endmacro %}
+{% macro intake_summary(intake) %}<dl>{% for key,label,required in intake_fields %}{% if intake.get(key) %}<div><dt>{{label}}</dt><dd>{{intake[key]}}</dd></div>{% endif %}{% endfor %}{% for key,label in [('readingType','Measurement and units'),('readingValue','Patient-reported value'),('readingSource','Measurement source'),('readingTime','Measurement time (UTC)')] %}{% if intake.get(key) %}<div><dt>{{label}}</dt><dd>{{intake[key]}}</dd></div>{% endif %}{% endfor %}{% if intake.get('submitted') %}<div><dt>Form submitted</dt><dd>{{time(intake.submitted,true)}}</dd></div>{% endif %}</dl>{% endmacro %}

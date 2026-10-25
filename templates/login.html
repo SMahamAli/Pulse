@@ -1,0 +1,39 @@
+{% extends 'base.html' %}{% from 'macros.html' import brand,trace,field,flashes,icon with context %}
+{% block content %}<div class="login-layout">
+<section class="login-story">{{brand()}}<div class="story-content">
+<div class="eyebrow">CARE, CONNECTED.</div>
+<h1>A little more<br>connection.<br>
+<span>A little more calm.</span>
+</h1>
+<p>Helping patients and care teams stay connected throughout the A&E journey.</p>
+<div class="hero-rhythm">
+<div class="rhythm-caption">
+<span class="rhythm-dot">
+</span>A little closer. Every heartbeat.</div>{{trace()}}<span class="rhythm-footnote">Decorative animation · not a patient reading</span>
+</div>
+<div class="story-card">{{icon('heart',24)}}<div>
+<strong>People at the heart of every reading.</strong>
+<p>Thoughtful tools. Human decisions.</p>
+</div>
+</div>
+</div>
+<small>Healthcare hackathon prototype · Fictional information only</small>
+</section>
+<section class="login-form">
+<div class="eyebrow">WELCOME TO PULSE</div>
+<h2>Your care starts with connection.</h2>
+<p>Sign in to keep up with your visit.</p>{{flashes()}}<form action="{{url_for('login')}}" method="post">
+<input type="hidden" name="csrf" value="{{csrf}}">{{field('Email address','email','email',required=true)}}{{field('Password','password','password',required=true)}}<button class="primary wide">Sign in {{icon('arrow',17)}}</button>
+</form>
+<p>New to Pulse? <a class="text-button" href="{{url_for('register')}}">Register as a patient</a>
+</p>
+<div class="demo-entry">
+<strong>Explore the demo</strong>
+<p>No real login. Role switching does not enforce real access.</p>
+<div class="role-buttons">{% for name in ['patient','staff','admin'] %}<form method="post" action="{{url_for('demo_role',role=name)}}">
+<input type="hidden" name="csrf" value="{{csrf}}">
+<button class="secondary">Demo {{name}} {{icon('arrow',14)}}</button>
+</form>{% endfor %}</div>
+</div>
+</section>
+</div>{% endblock %}

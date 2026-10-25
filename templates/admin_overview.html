@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import icon,badge with context %}
+{% block content %}
+<section class="visit-banner">
+<div><div class="eyebrow">ACCESS · ACTIVITY · SUPPORT</div><h2>A workspace for running Pulse.</h2><p>Manage demo staff profiles, inspect local access events and help people use the portal.</p></div>
+{{icon('shield',48)}}
+</section>
+<div class="stats-admin">
+<section class="stat"><div>Active demo profiles</div><strong>{{data.staff|selectattr('active')|list|length}}</strong><small>Staff and admin profiles</small></section>
+<section class="stat"><div>Active admin profiles</div><strong>{{data.staff|selectattr('active')|selectattr('role','equalto','admin')|list|length}}</strong><small>Profile records, not authenticated users</small></section>
+<section class="stat"><div>Unread support messages</div><strong>{{support_unread}}</strong><small>Patient and staff support</small></section>
+<section class="stat"><div>Recorded activity</div><strong>{{data.activity|length}}</strong><small>This browser's demo only</small></section>
+</div>
+<div class="two-grid">
+<section class="panel"><h2>{{icon('users')}} Staff & admin access</h2><p>Create a fictional staff or admin profile and activate/deactivate records.</p><a class="primary" href="{{url_for('admin_access')}}">Manage profiles</a></section>
+<section class="panel"><h2>{{icon('activity')}} Login activity</h2><p>Inspect recorded demo role entries, exits, rejected forms and unavailable password sign-ins. Export a CSV.</p><a class="secondary" href="{{url_for('admin_activity')}}">View activity</a></section>
+<section class="panel"><h2>{{icon('message')}} Chat</h2><p>Contact patients about portal issues or talk to the staff team.</p><a class="primary" href="{{url_for('chat')}}">Open chat</a></section>
+</div>
+<div class="notice">Public demo roles are freely selectable. Profile activation does not grant or revoke a real account. No real authentication, live security monitoring or cross-device messaging is connected.</div>
+{% endblock %}

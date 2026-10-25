@@ -1,0 +1,12 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -p no:cacheprovider"
+markers = ["browser: Chromium smoke tests (install Playwright's browser first)"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = ["legacy", ".venv", "node_modules", "dist", "test-results"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
