@@ -1,0 +1,72 @@
+{% extends 'base.html' %}{% from 'macros.html' import badge,command,icon with context %}{% block content %}{% include 'patient_sources.html' %}
+<div class="overview-grid">
+<section class="panel patient-panel">
+<div class="section-heading">
+<div>
+<h2>Patients in your care <span class="count">{{data.visits|length}}</span>
+</h2>
+<p>Local demo visits · separate from hospital crowding counts</p>
+</div>{{badge('Staff-led care')}}</div>
+<div class="review-shortcuts">
+<a href="{{url_for('patients')}}">All visits <span>{{data.visits|length}}</span>
+</a>
+<a href="{{url_for('patients',review='symptoms')}}">Symptoms to review <span>{{counts.updates}}</span>
+</a>
+<a href="{{url_for('patients',device='Disconnected')}}">Disconnected devices <span>{{counts.disconnected}}</span>
+</a>
+</div>
+<form class="filters" method="get">
+<input name="q" aria-label="Search patients" placeholder="Search name or reference…" value="{{request.args.get('q','')}}">
+<select name="status" aria-label="Visit status">{% for status in ['all','awaiting arrival','awaiting band','monitoring','closed'] %}<option value="{{status}}" {% if request.args.get('status','all')==status %}selected{% endif %}>{{'All visit statuses' if status=='all' else status}}</option>{% endfor %}</select>
+<select name="review" aria-label="Review category">{% for key,label in [('all','All reviews'),('pending','Awaiting review'),('symptoms','New symptoms')] %}<option value="{{key}}" {% if request.args.get('review','all')==key %}selected{% endif %}>{{label}}</option>{% endfor %}</select>
+<select name="device" aria-label="Device status">{% for connection in ['all','Connected','Disconnected','Simulated'] %}<option value="{{connection}}" {% if request.args.get('device','all')==connection %}selected{% endif %}>{{'All demo devices' if connection=='all' else 'Demo ? ' ~ connection}}</option>{% endfor %}</select>
+<button class="secondary">Apply filters</button>
+</form>
+<p class="table-note">On small screens, scroll the table sideways for readings and review details.</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Patient table, scroll sideways for more columns">
+<table>
+<thead>
+<tr>
+<th>Patient / reference</th>
+<th>Arrival / waiting</th>
+<th>Latest readings</th>
+<th>Device</th>
+<th>Review state</th>
+<th>
+</th>
+</tr>
+</thead>
+<tbody>{% for v in visits %}{% set history=data.readings.get(v.id,[]) %}{% set r=history[0] if history else none %}{% set d=data.devices|selectattr('id','equalto',v.device)|list|first %}<tr>
+<td>
+<a class="patient-name" href="{{url_for('details',reference=v.id)}}">{{v.name}}</a>
+<small>{{v.id}} · {{v.status}}</small>
+{% set hospital=data.hospitals|selectattr('id','equalto',v.hospital)|list|first %}<small>{{hospital.name if hospital else 'Hospital not selected'}}</small>
+</td>
+<td>{{time(v.arrival) if v.arrival else 'Not arrived'}}<small>{{waiting(v.arrival,v.get('closedAt'))}}</small>
+</td>
+<td>{% if r %}{{r.temperature if finite(r.temperature) else '—'}} °C · {{r.heartRate if finite(r.heartRate) else '—'}} bpm<small>{{time(r.time)}} · {{metric_status(r,'heartRate')}}</small>{% else %}No readings<small>Awaiting device</small>{% endif %}</td>
+<td>{{badge(device_status(d,history))}}</td>
+<td>{{badge('New symptoms' if v.updates|rejectattr('reviewed')|list else v.category)}}<small>Model: {{v.assessment.get('category',v.assessment.state)}}</small>
+</td>
+<td>
+<a aria-label="Open {{v.name}}" href="{{url_for('details',reference=v.id)}}">{{icon('chevron',17)}}</a>
+</td>
+</tr>{% endfor %}</tbody>
+</table>{% if not visits %}<p class="empty">No matching patients.</p>{% endif %}</div>
+<p class="table-note">Demo order follows registration/fixture order, not clinical priority. Experimental suggestions never determine treatment.</p>
+</section>
+<section class="panel attention">
+<h2>{{icon('bell',18)}} Needs attention</h2>{% for alert in data.alerts if not alert.ack %}<a class="attention-item" href="{{url_for('details',reference=alert.visit)}}">
+<span class="event-icon">{{icon('activity',17)}}</span>
+<div>{{badge(alert.kind)}}<h3>{{alert.visit}}</h3>
+<p>{{alert.text}}</p>
+<small>{{time(alert.time)}}</small>
+</div>{{icon('chevron',16)}}</a>{% else %}<p class="empty">No active alerts.</p>{% endfor %}<div class="care-note">{{icon('shield',22)}}<h3>Technology supports. People decide.</h3>
+<p>Experimental suggestions require staff review. This queue never decides treatment.</p>
+</div>
+</section>
+</div>
+<div class="info-strip">{{icon('activity',21)}}<div>
+<strong>A connected view, with honest limits.</strong>
+<p>All data is synthetic. Flask keeps this browser's demo in server memory until reset or restart.</p>
+</div>{{command('tick','Simulate new readings',back='staff')}}</div>{% endblock %}

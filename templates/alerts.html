@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% from 'macros.html' import badge,command with context %}{% block content %}<section class="panel">
+<div class="section-heading">
+<div>
+<h2>Alerts & review items</h2>
+<p>Device samples and patient workflow events. No clinical threshold engine.</p>
+</div>
+<div class="button-row">
+<a class="secondary" href="{{url_for('alerts')}}">Active</a>
+<a class="secondary" href="{{url_for('alerts',filter='acknowledged')}}">Acknowledged</a>
+</div>
+</div>{% for alert in data.alerts if (alert.ack is not none)==acknowledged %}<article class="inbox-row">
+<div>{{badge(alert.kind)}}<h3>{{alert.text}}</h3>
+<p>{{alert.visit}} · {{alert.source}} · {{time(alert.time,true)}}</p>{% if alert.ack %}<p>Acknowledged by {{alert.ack.by}} at {{time(alert.ack.time,true)}}</p>{% endif %}</div>
+<div class="button-row">
+<a class="secondary" href="{{url_for('details',reference=alert.visit)}}">Patient details</a>{% if not alert.ack %}{{command('acknowledge','Acknowledge',back='alerts',extras={'id':alert.id},primary=true)}}{% endif %}</div>
+</article>{% else %}<p class="empty">No {{'acknowledged' if acknowledged else 'active'}} alerts.</p>{% endfor %}</section>{% endblock %}

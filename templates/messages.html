@@ -1,0 +1,22 @@
+{% extends 'base.html' %}{% from 'macros.html' import badge,command,urgent with context %}{% block content %}<section class="panel conversation">
+<div class="section-heading">
+<div>
+<h2>Care team conversation</h2>
+<p>{{v.name}} · {{v.id}}</p>
+</div>{{command('mark_read' if role=='patient' else 'review','Mark staff replies read' if role=='patient' else 'Mark general/help reviewed',v.id,'messages')}}</div>
+<p>Symptom updates require their own review in patient details. General message review does not complete a symptom assessment.</p><div class="messages">{% for message in data.messages if message.visit==v.id %}<article class="message {{'staff-message' if message.sender=='staff' else ''}}">
+<div>
+<strong>{{'Demo staff' if message.sender=='staff' else 'Patient'}}</strong>{{badge(message.kind)}}<small>{{time(message.time,true)}}</small>
+</div>
+<p>{{message.text}}</p>
+<small>{% if message.sender=='staff' %}Staff reply sent{% elif message.reviewed %}Reviewed by {{message.reviewed.by}} at {{time(message.reviewed.time,true)}}{% else %}Sent · awaiting staff review{% endif %}</small>
+</article>{% else %}<p class="empty">No messages yet.</p>{% endfor %}</div>
+<form method="post">
+<input type="hidden" name="csrf" value="{{csrf}}">{% if role=='patient' %}<label class="field">Message type<select name="kind">
+<option value="general">General message</option>
+<option value="help">Help request</option>
+</select>
+</label>{% endif %}<label class="field" for="composer">{{'Your message' if role=='patient' else 'Reply to patient'}}</label>
+<textarea id="composer" name="text" required maxlength="2000" placeholder="{{'Tell the team what you need…' if role=='patient' else 'Write a reply…'}}">{{draft}}</textarea>
+<button class="primary" {% if v.status=='closed' %}disabled{% endif %}>Send {{'message' if role=='patient' else 'reply'}}</button>
+</form>{% if v.status=='closed' %}<p>This visit is closed. The conversation is read-only.</p>{% else %}<details class="demo-tools"><summary>Demo testing tools</summary><p>This deliberately fails the next demo submission once so you can test retry. Leave it alone during normal use.</p>{{command('fail_next','Test next submission failure',v.id,'messages')}}</details>{% endif %}{{urgent()}}</section>{% endblock %}

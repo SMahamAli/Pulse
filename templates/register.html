@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% from 'macros.html' import field,flashes with context %}{% block content %}<section class="panel standalone">
+<div class="eyebrow">{{'STAFF-ASSISTED ACCESS' if assisted else 'PATIENT REGISTRATION'}}</div>
+<h2>{{'Help someone get started.' if assisted else 'Welcome to Pulse.'}}</h2>
+<p>Use fictional details only. {{'No phone or email required. Portal activation is separate.' if assisted else 'This creates a demo profile, not a real account. Passwords are discarded.'}}</p>{% if not role %}{{flashes()}}{% endif %}<form method="post">
+<input type="hidden" name="csrf" value="{{csrf}}">{{field('Full name','name',value=values.get('name'),required=true)}}{{field('Date of birth','dob','date',values.get('dob'),true)}}{% if not assisted %}{{field('Email','email','email',values.get('email'),true)}}{{field('Password (8 or more characters)','password','password',required=true)}}{{field('Confirm password','confirm','password',required=true)}}{% endif %}<button class="primary wide">{{'Create patient reference' if assisted else 'Create demo profile'}}</button>
+</form>
+<p>Staff-assisted registration solves lack of patient access; the staff website does not work offline.</p>
+<a class="text-button" href="{{url_for('home')}}">Back to Pulse</a>
+</section>{% endblock %}

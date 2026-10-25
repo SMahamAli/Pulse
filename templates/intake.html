@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% from 'macros.html' import field,intake_summary with context %}{% block content %}<section class="panel standalone">
+<div class="eyebrow">BEFORE YOU ARRIVE · {{v.id}}</div>
+<h2>{{'Review your information' if review else 'Tell the team why you are coming.'}}</h2>
+{% set hospital=data.hospitals|selectattr('id','equalto',v.hospital)|list|first %}<p><strong>{{hospital.name if hospital else 'Hospital not selected'}}</strong> · {{v.id}}</p>
+<p>This form records your planned attendance in the demo. It is not a booking or hospital acceptance. Waiting starts only after staff confirm arrival. Real hospital notification is not connected yet.</p>
+<p>Provisional configurable fields for clinical/team agreement. No equipment or readings are required. Date of birth: {{v.dob}}.</p>
+<form method="post">
+<input type="hidden" name="csrf" value="{{csrf}}">{% if review %}{{intake_summary(values)}}{% for key,value in values.items() %}<input type="hidden" name="{{key}}" value="{{value}}">{% endfor %}<div class="button-row">
+<button class="secondary" name="intent" value="edit">Edit information</button>
+<button class="primary" name="intent" value="submit">Submit intake</button>
+</div>{% else %}{% for name,label,required in intake_fields %}{{field(label,name,value=values.get(name),required=required)}}{% endfor %}<fieldset>
+<legend>Optional patient-reported reading</legend>
+<label class="field">Measurement<select name="readingType">{% for item in ['','Temperature (°C)','Heart rate (bpm)'] %}<option value="{{item}}" {% if values.get('readingType')==item %}selected{% endif %}>{{item or 'Not supplied'}}</option>{% endfor %}</select>
+</label>{{field('Value (optional)','readingValue','number',values.get('readingValue'))}}{{field('Source / equipment (optional)','readingSource',value=values.get('readingSource'))}}{{field('Measurement time (UTC, optional)','readingTime','datetime-local',values.get('readingTime'))}}</fieldset>
+<button class="primary wide" name="intent" value="review">Review information</button>{% endif %}</form>
+</section>{% endblock %}

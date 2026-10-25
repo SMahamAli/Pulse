@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% from 'macros.html' import icon,badge with context %}
+{% block content %}
+<section class="visit-banner"><div><div class="eyebrow">HUMAN CONVERSATIONS</div><h2>Who would you like to talk to?</h2><p>One place for care conversations and help using Pulse.</p></div>{{icon('message',42)}}</section>
+<div class="two-grid chat-options">
+{% if role=='patient' %}
+<a class="panel channel-card" href="{{url_for('messages')}}">{{icon('heart',30)}}<h2>Care team</h2><p>Message staff about your selected visit, ask for assistance or discuss a symptom update.</p><strong>Open care chat →</strong></a>
+<a class="panel channel-card" href="{{url_for('support')}}">{{icon('shield',30)}}<h2>Contact admin</h2><p>Ask about your account, the portal or using the website.</p><strong>Open admin chat →</strong></a>
+{% elif role=='staff' %}
+<a class="panel channel-card" href="{{url_for('inbox')}}">{{icon('users',30)}}<h2>Patients</h2><p>Visit-linked conversations, assistance requests and symptom updates.</p>{{badge(counts.messages ~ ' unreviewed')}}<strong>Open patient chats →</strong></a>
+<a class="panel channel-card" href="{{url_for('support')}}">{{icon('shield',30)}}<h2>Contact admin</h2><p>Discuss access, equipment administration or portal support.</p><strong>Open admin chat →</strong></a>
+{% else %}
+<a class="panel channel-card" href="{{url_for('support',audience='patient')}}">{{icon('users',30)}}<h2>Patients</h2><p>Reply to portal support requests or start a conversation using a demo patient reference.</p><strong>Open patient support →</strong></a>
+<a class="panel channel-card" href="{{url_for('support',audience='staff')}}">{{icon('shield',30)}}<h2>Staff</h2><p>Start or reply to conversations with the care team about using Pulse.</p><strong>Open staff chat →</strong></a>
+{% endif %}
+</div>
+<div class="notice">All chats are with people, not an AI chatbot. Messages do not guarantee immediate review. For urgent concerns, alert nearby staff directly. Demo replies are shared only within this browser's workspace; use Switch demo role to demonstrate them.</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import badge with context %}
+{% block content %}
+<div class="notice">These events were recorded by this browser's Flask demo. They are not real successful logins, online-user counts or a durable security audit. Passwords, form text and IP addresses are not recorded here. Reset/restart clears the list; at most 200 events are retained.</div>
+<section class="panel"><div class="section-heading"><div><h2>Access activity</h2><p>Newest first · timestamps in UTC</p></div><a class="secondary" href="{{url_for('admin_activity_csv')}}">Download activity CSV</a></div>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Access activity, scroll sideways for more columns"><table><thead><tr><th>Time</th><th>Event</th><th>Demo actor</th><th>Details</th><th>Outcome</th></tr></thead><tbody>
+{% for event in data.activity %}<tr><td>{{time(event.time,true)}}</td><td>{{event.event}}</td><td>{{event.actor}}</td><td>{{event.detail}}</td><td>{{badge(event.outcome)}}</td></tr>{% else %}<tr><td colspan="5">No events recorded yet.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

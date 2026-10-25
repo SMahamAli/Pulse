@@ -1,0 +1,16 @@
+{% extends 'base.html' %}{% from 'macros.html' import command,field with context %}{% block content %}<div class="notice">Demo profiles do not grant real access. Public demo role entry is not authentication; real permissions require an agreed identity system.</div>
+<div class="two-grid">
+<section class="panel">
+<h2>Staff & admin profiles</h2>{% for staff in data.staff %}<div class="inbox-row">
+<div>
+<strong>{{staff.name}}</strong>
+<p>{{staff.email}} · {{staff.role}} · {{'Active' if staff.active else 'Inactive'}}</p>
+</div>{{command('toggle_staff','Deactivate' if staff.active else 'Activate',back='admin_access',extras={'id':staff.id})}}</div>{% endfor %}</section>
+<section class="panel">
+<h2>Create a demo profile</h2>{% call command('add_staff','Create demo profile',back='admin_access',primary=true) %}{{field('Name','name',required=true)}}{{field('Work email (fictional)','email','email',required=true)}}<label class="field">Role<select name="role" aria-label="Role">
+<option value="staff">Staff</option>
+<option value="admin">Admin</option>
+</select>
+</label>{% endcall %}<p>No password or real login account is created. Patient registration cannot create staff/admin profiles.</p>
+</section>
+</div>{% endblock %}

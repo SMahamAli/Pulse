@@ -1,60 +1,42 @@
 # Pulse - Wearable Patient Monitoring for A&E
 
-Built at AI IN HEALTHCARE HACKATHON 
+Built at the AI IN HEALTHCARE HACKATHON.
 
-Collaborators:
-- Elysha Ruddock
+## Our team
+
 - Mohammed Sherif
 - Mostafa Issa
 - Maham Ali
+- Elysha Ruddock
 
-The problem
+## The idea
 
-Patients can wait in NHS A&E waiting rooms for hours after triage. Their condition can get worse during that time without any one noticing, due to staff not been able to watch everyone in a busy waiting room. 
+Pulse helps patients and staff stay connected while patients wait in A&E. Patients choose a hospital, fill in an intake form, view their visits and chat with staff. Staff confirm arrival, assign a wristband and review readings or requests for help.
 
-Our solution
+## Technology
 
-Each patient is given a wristband when they're triaged. The band continuously records:
-- Heart rate
-- Blood oxygen(spO2)
-- Respiratory rate
-- Skin temperature
-- Falls
-
-Tech stack 
 | Part | Technology |
-|---|---|
-Wristband |ESP32-WROOM-32, Accelerometer MPU-6050, Oximeter & heart rate sensor, Fever Click Board MIKROE-2554, Wristband, LCD Display, Small 3.7V LiPo-300
-| Database | Oracle (built in Oracle APEX) | 
-| Website | 
-| AI Training |
+| --- | --- |
+| Wristband | ESP32-WROOM-32, heart-rate and temperature sensors, LCD display and LiPo battery (team hardware prototype) |
+| Database | Oracle Database, Oracle APEX and a protected read-only ORDS API |
+| Website | Python 3.12+, Flask, Jinja2, HTML, CSS and SVG icons/charts |
+| AI training | |
+| Tests and checks | pytest, Python Playwright/Chromium, Ruff and GitHub Actions |
 
-The readings go to a live dashboard that staff can watch. The system:
-- Combines wristband data with staff observations to calculate an early warning score.
-- Raises an alert when a patient crosses a threshold.
-- allows staff to acknowledge and resolve alerts while keeping a record of who responded and when.
+## How to run the website
 
-Features
+1. Install **Python 3.12 or newer** from [python.org](https://www.python.org/downloads/). On Windows, tick **Add Python to PATH**.
+2. Download this project and open its folder in VS Code. Choose **Terminal > New Terminal**. VS Code is optional.
+3. Install the requirements:
 
-- Live overview of every patient in the department, colour coded by triage category.
-- Latest vitals for each patient.
-- Trend charts so staff can see whether a patient is getting worse.
-- Alerts sorted by severity.
-- Logins with different roles (Doctor, nurse, patient, admin, receptionist)
+```powershell
+python -m pip install -r requirements.txt
+```
 
-Demo Logins
+4. Start the website:
 
-| Role | Email | Password |
-|---|---|---|
-| Nurse | priya.patel@demo-nhs.test | priya1 |
-| Doctor | sarah.whitfield@demo-nhs.test | sarah1 |
-| Nurse in Charge | michael.grant@demo-nhs.test | michael1 |
-| Admin | rachel.adams@demo-nhs.test | rachel1 |
+```powershell
+python app.py
+```
 
-Demo scenario
-
-The demo data covers one simulated shift with 14 patients.
-Things to look for:
-
-Data and privacy
-All patient data in the repository
+5. Open **http://127.0.0.1:5000/** and choose **Demo patient**, **Demo staff** or **Demo admin**. Keep the terminal open. Press **Ctrl + C** to stop it. The same commands work on Mac/Linux.

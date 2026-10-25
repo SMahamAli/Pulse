@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% from 'macros.html' import badge,icon with context %}
+{% block content %}
+<section class="visit-banner"><div><div class="eyebrow">YOUR SHIFT AT A GLANCE</div><h2>Stay close. See what needs attention.</h2><p>Workflow overview for the website demo. Oracle records are available separately inside Patients.</p></div>{{icon('activity',42)}}</section>
+<div class="stats-grid">{% for label,key in [('Arrived and waiting','waiting'),('Active alerts','alerts'),('Assistance requests','help'),('Symptoms to review','updates'),('Unreviewed messages','messages'),('Disconnected devices','disconnected')] %}<section class="stat"><div>{{label}}</div><strong>{{'%02d'|format(counts[key])}}</strong><small>Local demo workflow</small></section>{% endfor %}</div>
+<div class="two-grid">
+<a class="panel channel-card" href="{{url_for('patients')}}">{{icon('users',28)}}<h2>Patients</h2><p>Manage demo visits or switch to the read-only Oracle records. Each source is clearly identified.</p><strong>Open patient workspace →</strong></a>
+<a class="panel channel-card" href="{{url_for('chat')}}">{{icon('message',28)}}<h2>Chat</h2><p>Respond to patients or contact administration.</p><strong>Open chat →</strong></a>
+</div>
+<section class="panel"><div class="section-heading"><h2>Review needed</h2><a class="secondary" href="{{url_for('alerts')}}">Open alerts</a></div>{% for alert in data.alerts if not alert.ack %}<a class="attention-item" href="{{url_for('details',reference=alert.visit)}}"><div>{{badge(alert.kind)}}<h3>{{alert.visit}}</h3><p>{{alert.text}}</p><small>{{time(alert.time,true)}}</small></div>{{icon('chevron')}}</a>{% else %}<p>No active demo alerts.</p>{% endfor %}</section>
+{% endblock %}
