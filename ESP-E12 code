@@ -8,13 +8,13 @@
 
 // ================= YOUR SETTINGS =================
 
-const char* WIFI_SSID = "";
-const char* WIFI_PASSWORD = "";
+const char* WIFI_SSID = "YOUR_SSID";
+const char* WIFI_PASSWORD = "YOUR_PASSWORD";
 
 const char* API_URL =
-  "";
+  "API_URL_FOR_DATABASE";
 
-const char* API_KEY = "";
+const char* API_KEY = "API_KEY_FOR_DATABASE";
 
 // Must match a device with an active DEVICE_ASSIGNMENT.
 constexpr unsigned long DEVICE_ID = 1;
